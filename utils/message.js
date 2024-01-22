@@ -17,4 +17,11 @@ const successMessageWithData = (data) => {
   };
 };
 
-module.exports = { badRequestMessage, successMessageWithData };
+const authMessage = () => {
+  return {
+    status: 401,
+    message: "Unauthorized",
+  };
+};
+
+module.exports = { badRequestMessage, successMessageWithData, authMessage };
