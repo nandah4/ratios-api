@@ -19,6 +19,9 @@ model User {
     updatedAt DateTime @default(now())
     isDeleted Boolean @default(false)
     photos Photo[]
+    albums Album[]
+    comentars Comentar[]
+    likes Like[]
 }
 
 model Photo {
@@ -31,4 +34,38 @@ model Photo {
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now())
     isDeleted Boolean @default(false)
+    comentars Comentar[]
+    likes Like[]
+}
+
+model Album {
+    id String @id @default(uuid())
+    userId String
+    user User @relation(fields: [userId], references: [id])
+    title String
+    description String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+    isDeleted Boolean @default(false)
+}
+
+model Comentar {
+    id String @id @default(uuid())
+    userId String
+    user User @relation(fields: [userId], references: [id])
+    photoId String 
+    photo Photo @relation(fields: [photoId], references: [id])
+    comentar String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+    isDeleted Boolean @default(false)
+}
+
+model Like {
+    userId String
+    user User @relation(fields: [userId], references: [id])
+    photoId String
+    photo Photo @relation(fields: [photoId], references: [id])
+
+    @@id([userId, photoId])  
 }
