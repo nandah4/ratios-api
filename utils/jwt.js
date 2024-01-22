@@ -7,7 +7,9 @@ const signJwt = (userId) => {
 };
 
 const verifyJwt = (token) => {
-  const parse = jwt.verify(token, SECRET_KEY_JWT);
+  if (!token) return new Error("token required");
+  const tokenParse = token.split(" ");
+  const parse = jwt.verify(tokenParse[1], SECRET_KEY_JWT);
   return parse;
 };
 

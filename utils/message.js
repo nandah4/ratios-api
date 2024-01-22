@@ -17,6 +17,13 @@ const successMessageWithData = (data) => {
   };
 };
 
+const successCreateMessageWithData = () => {
+  return {
+    stastus: 201,
+    message: "successfull create",
+  };
+};
+
 const authMessage = () => {
   return {
     status: 401,
@@ -24,4 +31,4 @@ const authMessage = () => {
   };
 };
 
-module.exports = { badRequestMessage, successMessageWithData, authMessage };
+module.exports = { badRequestMessage, successMessageWithData, successCreateMessageWithData, authMessage };
