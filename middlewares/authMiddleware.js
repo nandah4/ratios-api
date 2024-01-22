@@ -20,7 +20,7 @@ const authMiddleware = async (req, res, next) => {
     }
   }
 
-  return res.send(authMessage());
+  return res.status(401).send(authMessage());
 };
 
 module.exports = { authMiddleware };
