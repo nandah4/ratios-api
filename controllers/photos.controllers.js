@@ -32,13 +32,20 @@ const getPhotoById = async (req, res) => {
             }
         });
 
-        return res.send(successMessageWithData(
-            photo
-        ));
+        if(!photo) {
+            return res.status(404).send({
+                message: "Photo not found or unauthorized access"
+            })
+        };
+
+        return res.status(200).send({
+            message: "Photo Succes Uploaded",
+            data: photo
+        })
 
     } catch (error) {
         return res.status(500).send({
-            message: "Cannot get photo"
+            message: "Internal server error"
         })
     }
 }
@@ -58,6 +65,18 @@ const createPhoto = async (req, res) => {
         const description = req.body.description
         const locationFile = req.file.path
         const userId = req.body.userId
+
+        if(!title) {
+            return res.status(422).send({
+                message: "Title is required when uploading a photo."
+            })
+        }
+        
+        if(!description) {
+            return res.status(422).send({
+                message: "Description is required when uploading a photo."
+            })
+        }
 
         const newPhoto = await prisma.photo.create({
             data: {
