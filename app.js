@@ -7,6 +7,7 @@ const { fileRoutes } = require("./routes/files.routes");
 const { photosRoutes } = require("./routes/photos.routes");
 const { albumRoutes } = require("./routes/album.routes");
 const app = express();
+const multer = require('multer');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());

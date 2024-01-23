@@ -4,68 +4,68 @@ generator client {
 
 datasource db {
     provider = "mysql"
-    url = env("DATABASE_URL")
+    url      = env("DATABASE_URL")
 }
 
 model User {
-    id String @id @default(uuid())
-    username String @unique
-    fullName String
-    password String
-    photoUrl String
-    email String @unique
-    address String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @default(now())
-    isDeleted Boolean @default(false)
-    photos Photo[]
-    albums Album[]
+    id        String     @id @default(uuid())
+    username  String     @unique
+    fullName  String
+    password  String
+    photoUrl  String
+    email     String     @unique
+    address   String
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @default(now())
+    isDeleted Boolean    @default(false)
+    photos    Photo[]
+    albums    Album[]
     comentars Comentar[]
-    likes Like[]
+    likes     Like[]
 }
 
 model Photo {
-    id String @id @default(uuid())
-    userId String
-    user User @relation(fields: [userId], references: [id])
-    title String
-    description String
+    id           String     @id @default(uuid())
+    userId       String
+    title        String
+    description  String
     locationFile String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @default(now())
-    isDeleted Boolean @default(false)
-    comentars Comentar[]
-    likes Like[]
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @default(now())
+    isDeleted    Boolean    @default(false)
+    user         User       @relation(fields: [userId], references: [id])
+    comentars    Comentar[]
+    likes        Like[]
 }
 
 model Album {
-    id String @id @default(uuid())
-    userId String
-    user User @relation(fields: [userId], references: [id])
-    title String
+    id          String   @id @default(uuid())
+    userId      String
+    user        User     @relation(fields: [userId], references: [id])
+    title       String
     description String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @default(now())
-    isDeleted Boolean @default(false)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @default(now())
+    isDeleted   Boolean  @default(false)
 }
 
 model Comentar {
-    id String @id @default(uuid())
-    userId String
-    user User @relation(fields: [userId], references: [id])
-    photoId String 
-    photo Photo @relation(fields: [photoId], references: [id])
-    comentar String
+    id        String   @id @default(uuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id])
+    photoId   String
+    photo     Photo    @relation(fields: [photoId], references: [id])
+    comentar  String
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now())
-    isDeleted Boolean @default(false)
+    isDeleted Boolean  @default(false)
 }
 
 model Like {
-    userId String
-    user User @relation(fields: [userId], references: [id])
+    userId  String
+    user    User   @relation(fields: [userId], references: [id])
     photoId String
-    photo Photo @relation(fields: [photoId], references: [id])
+    photo   Photo  @relation(fields: [photoId], references: [id])
 
-    @@id([userId, photoId])  
+    @@id([userId, photoId])
 }

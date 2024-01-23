@@ -1,10 +1,59 @@
 const { PrismaClient } = require("@prisma/client");
 const { badRequestMessage, successMessageWithData } = require("../utils/message");
-const { hashPassword } = require("../utils/password");
+const { signJwt, verifyJwt } = require("../utils/jwt");
+const { hashPassword, matchPassword } = require("../utils/password");
 
-function loginController(req, res) {
-  return res.send("login");
+
+async function loginController(req, res) {
+  try {
+    const { email, password } = req.body;
+
+    const prisma = new PrismaClient()
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email: email,
+      }
+    });
+
+    if (!user) {
+      res.status(404).send({
+        message: "Email not found. Please double-check your email address or consider signing up if you don't have an account."
+      })
+    };
+
+    if (!user.password) {
+      res.status(404).send({
+        message: "Password not set. Please set a password for your account to ensure security."
+      })
+    };
+
+    const isPasswordValid = await matchPassword(password, user.password)
+
+    if (!isPasswordValid) {
+      return res.send(badRequestMessage({messages: [
+        {
+          field: "Confirm Password",
+          message: "The password or confirmation password is not valid. Make sure your password meets the specified requirements"
+        },
+      ],
+    })
+    );
+    }
+    const jwt = signJwt(user.id);
+
+    return res.send(successMessageWithData({
+      token: jwt,
+    }));
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal server error. Please try again later."
+    })
+  }
 }
+
 
 async function registerController(req, res) {
   try {
