@@ -239,7 +239,7 @@ const deletePhotoById = async (req, res) => {
             isDeleted: true,
         },
     });
-    
+
     if (!deletePhoto) {
         return res.send(badRequestMessage({
             messages: {
@@ -260,7 +260,6 @@ const deletePhotoById = async (req, res) => {
             }
         }));
     } catch (error) {
-        console.error("Kesalahan menghapus file", error);
         return res.send(badRequestMessage({
             messages: {
                 message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
