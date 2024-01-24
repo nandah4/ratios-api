@@ -17,15 +17,19 @@ async function loginController(req, res) {
     });
 
     if (!user) {
-      res.status(404).send({
-        message: "Email not found. Please double-check your email address or consider signing up if you don't have an account."
-      })
+      return res.send(badRequestMessage({
+        messages: {
+          message: "Email not found. Please double-check your email address or consider signing up if you don't have an account."
+        }
+      }))
     };
 
     if (!user.password) {
-      res.status(404).send({
-        message: "Password not set. Please set a password for your account to ensure security."
-      })
+      return res.send(badRequestMessage({
+        messages: {
+          message: "Password not set. Please set a password for your account to ensure security."
+        }
+      }))
     };
 
     const isPasswordValid = await matchPassword(password, user.password)
@@ -53,7 +57,6 @@ async function loginController(req, res) {
     })
   }
 }
-
 
 async function registerController(req, res) {
   try {
@@ -152,5 +155,7 @@ async function registerController(req, res) {
     console.log(error);
   }
 }
+
+
 
 module.exports = { loginController, registerController };

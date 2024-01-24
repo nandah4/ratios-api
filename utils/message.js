@@ -1,7 +1,7 @@
 const badRequestMessage = ({ messages, error }) => {
   return {
     status: 400,
-    messages: "bad request",
+    messages: "Bad Request",
     errors: {
       error,
       messages: messages,
@@ -12,7 +12,7 @@ const badRequestMessage = ({ messages, error }) => {
 const successMessageWithData = (data) => {
   return {
     stastus: 200,
-    message: "success",
+    message: "Success",
     data: data,
   };
 };
@@ -20,7 +20,7 @@ const successMessageWithData = (data) => {
 const successCreateMessageWithData = () => {
   return {
     stastus: 201,
-    message: "successfull create",
+    message: "Successfull create",
   };
 };
 
