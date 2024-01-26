@@ -7,6 +7,7 @@ const { authMiddleware } = require('../middlewares/authMiddleware');
 const { createComentarById, deleteComentarById } = require("../controllers/comentar.controllers")
 const { createLikeByIdUser, deleteLikeByIdUser } = require("../controllers/like.controllers");
 
+// ROUTES PHOTO
 photosRoutes.get("/", authMiddleware, getPhoto); // all photo
 photosRoutes.get("/:photoId", authMiddleware, getPhotoById); // by id photo
 photosRoutes.post("/user", authMiddleware, getPhotoByIdUser); // by id user
