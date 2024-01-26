@@ -7,7 +7,7 @@ const { authMiddleware } = require('../middlewares/authMiddleware');
 
 photosRoutes.get("/", authMiddleware, getPhoto); // all photo
 photosRoutes.get("/:photoId", authMiddleware, getPhotoById); // by id photo
-photosRoutes.get("/:userId/user", authMiddleware, getPhotoByIdUser); // by id user
+photosRoutes.post("/user", authMiddleware, getPhotoByIdUser); // by id user
 photosRoutes.post("/", authMiddleware, multer({ storage: fileStorage, fileFilter }).single('locationFile'), createPhoto);
 photosRoutes.delete("/:photoId", authMiddleware, deletePhotoById);
 photosRoutes.put("/:photoId", authMiddleware, updatePhotoById);
