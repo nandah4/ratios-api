@@ -17,7 +17,7 @@ photosRoutes.put("/:photoId", authMiddleware, updatePhotoById);
 
 // ROUTES COMMENT
 photosRoutes.post("/:photoId/comentar", authMiddleware, createComentarById);
-photosRoutes.delete(":/comentarId", authMiddleware, deleteComentarById);
+photosRoutes.delete(":/comentarId/comentar", authMiddleware, deleteComentarById);
 
 // ROUTES LIKE
 photosRoutes.post("/:photoId/like", authMiddleware, createLikeByIdUser);
