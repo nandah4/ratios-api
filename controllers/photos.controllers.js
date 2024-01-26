@@ -5,8 +5,6 @@ const { PrismaClient } = require('@prisma/client');
 const { badRequestMessage, successMessageWithData } = require("../utils/message");
 const { verifyJwt } = require("../utils/jwt");
 const fs = require('fs/promises');
-const path = require('path');
-const { resolveTxt } = require('dns');
 
 const prisma = new PrismaClient();
 
@@ -23,8 +21,8 @@ const getPhoto = async (req, res) => {
                 message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
             }
         }));
-    }
-}
+    };
+};
 
 // GET PHOTO BY ID PHOTO
 const getPhotoById = async (req, res) => {
@@ -37,11 +35,26 @@ const getPhotoById = async (req, res) => {
                 id: photoId,
                 userId: parseToken.userId,
                 isDeleted: false
-            }
+            },
+            include: {
+                comentars: {
+                    where: {
+                        isDeleted: false,
+                    },
+                    include: {
+                        user: true,
+                    },
+                },
+                likes: {
+                    include: {
+                        user: true
+                    },
+                },
+            },
         });
 
         if (!photo) {
-            return res.status(404).send(badRequestMessage({
+            return res.send(badRequestMessage({
                 messages:
                 {
                     message: "Photo not found or unauthorized access"
@@ -51,6 +64,35 @@ const getPhotoById = async (req, res) => {
 
         return res.send(successMessageWithData(photo));
 
+    } catch (error) {
+        console.log(error)
+        return res.send(badRequestMessage({
+            messages: {
+                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+            },
+        }));
+    };
+};
+
+// GET PHOTO BY ID USER
+const getPhotoByIdUser = async (req, res) => {
+    const parseToken = verifyJwt(req.headers?.authorization);
+
+    try {
+
+        // Get All Foto User Id
+        const getPhoto = await prisma.photo.findMany({
+            where: {
+                userId: parseToken.userId,
+                isDeleted: false
+            },
+        });
+
+        return res.send(successMessageWithData({
+            messages: {
+                getPhoto
+            },
+        }));
     } catch (error) {
         return res.send(badRequestMessage({
             messages: {
@@ -76,7 +118,7 @@ const createPhoto = async (req, res) => {
         const title = req.body.title
         const description = req.body.description
         const locationFile = req.file.path
-        const userId = req.body.userId
+        // const userId = req.body.userId
 
         if (!title) {
             return res.send(badRequestMessage({
@@ -94,15 +136,6 @@ const createPhoto = async (req, res) => {
             }))
         };
 
-        const newPhoto = await prisma.photo.create({
-            data: {
-                title,
-                description,
-                locationFile,
-                userId: parseToken.userId
-            }
-        });
-
         // Validasi Panjang Title
         if (title && title.length > MAX_TITLE) {
             return res.send(badRequestMessage({
@@ -115,16 +148,26 @@ const createPhoto = async (req, res) => {
         // Validasi Panjang Description
         if (description && description.length > MAX_DESCRIPTION) {
             return res.send(badRequestMessage({
-                message: `Description length exceeds the maximum limit of ${MAX_DESCRIPTION} characters.`
+                messages: {
+                    message: `Description length exceeds the maximum limit of ${MAX_DESCRIPTION} characters.`
+                }
             }));
         };
+
+        const newPhoto = await prisma.photo.create({
+            data: {
+                title,
+                description,
+                locationFile,
+                userId: parseToken.userId
+            }
+        });
 
         return res.send(successMessageWithData({
             messages: {
                 message: "Hooray! Your photo has been uploaded successfully. Celebrate the moment!"
             }
         }));
-
     } catch (error) {
         return res.send(badRequestMessage({
             messages: {
@@ -134,7 +177,7 @@ const createPhoto = async (req, res) => {
     };
 };
 
-// UPDATE PHOTO  BY ID PHOTO
+// UPDATE PHOTO BY ID PHOTO
 const updatePhotoById = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
@@ -161,6 +204,7 @@ const updatePhotoById = async (req, res) => {
         // Validasi Panjang Title
         if (title && title.length > MAX_TITLE) {
             return res.send(badRequestMessage({
+                error,
                 messages: {
                     message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
                 }
@@ -221,39 +265,39 @@ const updatePhotoById = async (req, res) => {
 
 // DELETE PHOTO
 const deletePhotoById = async (req, res) => {
+
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
 
-    // const photo = await prisma.photo.findUnique({
-    //     where: {
-    //         id: photoId
-    //     }
-    // });
-
-    
-    const deletePhoto = await prisma.photo.update({
-        where: {
-            id: photoId
-        },
-        data: {
-            isDeleted: true,
-        },
-    });
-
-    if (!deletePhoto) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Photo not found. Looks like it's on a coffee break. Don't worry, we're on it!"
-            }
-        }));
-    };
-
-    // Ekstrak nama file dari lokasi file
-    const fileName = path.basename(photo.locationFile);
-
-    // Hapus file photo dari file proyek
     try {
-        await fs.unlink(`uploads/product/${fileName}`);
+
+        const deletePhoto = await prisma.photo.update({
+            where: {
+                id: photoId
+            },
+            data: {
+                isDeleted: true,
+            },
+        });
+
+        if (!deletePhoto || !deletePhoto.isDeleted) {
+            return res.send(badRequestMessage({
+                messages: {
+                    message: "Photo not found. Looks like it's on a coffee break. Don't worry, we're on it!"
+                }
+            }));
+        };
+
+        // isDeleted to true to assocciated comments
+        await prisma.comentar.updateMany({
+            where: {
+                id: photoId,
+            },
+            data: {
+                isDeleted: true
+            },
+        });
+
         return res.send(successMessageWithData({
             messages: {
                 message: "Photo deletion complete! Your memories are now a bit lighter."
@@ -266,6 +310,12 @@ const deletePhotoById = async (req, res) => {
             }
         }));
     };
+
+
+    // Ekstrak nama file dari lokasi file
+    // const fileName = path.basename(photo.locationFile);
+
+    // Hapus file photo dari file proyek        
 }
 
-module.exports = { getPhoto, getPhotoById, createPhoto, updatePhotoById, deletePhotoById };
+module.exports = { getPhoto, getPhotoById, getPhotoByIdUser, createPhoto, updatePhotoById, deletePhotoById };
