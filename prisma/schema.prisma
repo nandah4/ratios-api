@@ -18,10 +18,16 @@ model User {
     createdAt DateTime   @default(now())
     updatedAt DateTime   @default(now())
     isDeleted Boolean    @default(false)
+    role Role @default(USER)
     photos    Photo[]
     albums    Album[]
     comentars Comentar[]
     likes     Like[]
+}
+
+enum Role {
+    USER
+    ADMIN
 }
 
 model Photo {
