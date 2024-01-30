@@ -89,6 +89,7 @@ const deleteComentarById = async (req, res) => {
         }));
 
     } catch (error) {
+        console.log(error)
         return res.send(badRequestMessage({
             messages: {
                 message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
