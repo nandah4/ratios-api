@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const { verifyJwt } = require("../utils/jwt");
-const { successMessageWithData, successCreateMessageWithData } = require("../utils/message");
+const { successMessageWithData, successCreateMessageWithData, badRequestMessage } = require("../utils/message");
 
 const getAlbumsByUserIdController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -37,11 +37,18 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
 
 const createAlbumByUserIdController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
-
+  const prisma = new PrismaClient();
   const { title, description } = req.body;
 
-  const prisma = new PrismaClient();
-
+  
+  if (!title) {
+    return res.send(badRequestMessage({
+      messages: {
+        message: "Title is required"
+      }
+    }))
+  };
+  
   const newAlbum = await prisma.album.create({
     data: {
       title: title,

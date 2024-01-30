@@ -1,5 +1,4 @@
-const MAX_TITLE = 100;
-const MAX_DESCRIPTION = 1000;
+const MAX_TITLE = 200;
 
 const { PrismaClient } = require('@prisma/client');
 const { badRequestMessage, successMessageWithData } = require("../utils/message");
@@ -10,8 +9,24 @@ const prisma = new PrismaClient();
 
 // GET ALL PHOTO
 const getPhoto = async (req, res) => {
+    const { title } = req.query;
+
     try {
-        const photos = await prisma.photo.findMany();
+        const searchQuery = title ? {
+            where: {
+                isDeleted: false,
+                title: {
+                    contains: title,
+                },
+            },
+        }
+        : {
+            where : {
+                isDeleted: false
+            }
+        }
+
+        const photos = await prisma.photo.findMany(searchQuery);
 
         return res.send(successMessageWithData(photos));
 
@@ -87,7 +102,7 @@ const getPhotoByIdUser = async (req, res) => {
                 isDeleted: false
             },
         });
-        
+
         return res.send(successMessageWithData({
             messages: {
                 getPhoto
@@ -143,22 +158,16 @@ const createPhoto = async (req, res) => {
                     message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
                 }
             }));
-        }
-
-        // Validasi Panjang Description
-        if (description && description.length > MAX_DESCRIPTION) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: `Description length exceeds the maximum limit of ${MAX_DESCRIPTION} characters.`
-                }
-            }));
         };
 
+        // Replace locationFile nama uploads/photos/
+        const fileNameOnly = locationFile.replace(/^uploads[\\\/]photos[\\\/]/, 'http://localhost:3000/files/images/photos/');
+        
         const newPhoto = await prisma.photo.create({
             data: {
                 title,
                 description,
-                locationFile,
+                locationFile: fileNameOnly,
                 userId: parseToken.userId
             }
         });
@@ -212,13 +221,13 @@ const updatePhotoById = async (req, res) => {
         };
 
         // Validasi Panjang Description
-        if (description && description.length > MAX_DESCRIPTION) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: `Description length exceeds the maximum limit of ${MAX_DESCRIPTION} characters.`
-                }
-            }));
-        };
+        // if (description && description.length > MAX_DESCRIPTION) {
+        //     return res.send(badRequestMessage({
+        //         messages: {
+        //             message: `Description length exceeds the maximum limit of ${MAX_DESCRIPTION} characters.`
+        //         }
+        //     }));
+        // };
 
         const updatePhoto = await prisma.photo.update({
             where: {
