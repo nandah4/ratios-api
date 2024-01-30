@@ -24,7 +24,7 @@ model User {
     comentars Comentar[]
     likes     Like[]
     followers Follows[] @relation("followers")
-    follows Follows[] @relation("following")
+    following Follows[] @relation("following")
 }
 
 model Follows {
