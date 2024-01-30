@@ -23,6 +23,18 @@ model User {
     albums    Album[]
     comentars Comentar[]
     likes     Like[]
+    followers Follows[] @relation("followers")
+    follows Follows[] @relation("following")
+}
+
+model Follows {
+    follower User @relation("followers",fields: [followerId], references: [id])
+    followerId String 
+
+    followingId String 
+    following User @relation("following",fields: [followingId], references: [id])
+
+    @@id([followerId, followingId])
 }
 
 enum Role {
