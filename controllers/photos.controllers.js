@@ -4,6 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const { badRequestMessage, successMessageWithData } = require("../utils/message");
 const { verifyJwt } = require("../utils/jwt");
 const fs = require('fs/promises');
+const { ENV_PORT } = require('../environtment');
 
 const prisma = new PrismaClient();
 
@@ -20,11 +21,11 @@ const getPhoto = async (req, res) => {
                 },
             },
         }
-        : {
-            where : {
-                isDeleted: false
+            : {
+                where: {
+                    isDeleted: false
+                }
             }
-        }
 
         const photos = await prisma.photo.findMany(searchQuery);
 
@@ -80,7 +81,6 @@ const getPhotoById = async (req, res) => {
         return res.send(successMessageWithData(photo));
 
     } catch (error) {
-        console.log(error)
         return res.send(badRequestMessage({
             messages: {
                 message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
@@ -103,11 +103,8 @@ const getPhotoByIdUser = async (req, res) => {
             },
         });
 
-        return res.send(successMessageWithData({
-            messages: {
-                getPhoto
-            },
-        }));
+        return res.send(successMessageWithData(getPhoto));
+
     } catch (error) {
         return res.send(badRequestMessage({
             messages: {
@@ -133,7 +130,6 @@ const createPhoto = async (req, res) => {
         const title = req.body.title
         const description = req.body.description
         const locationFile = req.file.path
-        // const userId = req.body.userId
 
         if (!title) {
             return res.send(badRequestMessage({
@@ -161,8 +157,8 @@ const createPhoto = async (req, res) => {
         };
 
         // Replace locationFile nama uploads/photos/
-        const fileNameOnly = locationFile.replace(/^uploads[\\\/]photos[\\\/]/, 'http://localhost:3000/files/images/photos/');
-        
+        const fileNameOnly = locationFile.replace(/^uploads[\\\/]photos[\\\/]/, `http://localhost:${ENV_PORT}/files/images/photos/`);
+
         const newPhoto = await prisma.photo.create({
             data: {
                 title,

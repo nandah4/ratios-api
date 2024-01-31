@@ -9,6 +9,16 @@ const fileStorage = multer.diskStorage({
         const fileName = file.originalname.replace(/\s+/g, '-');
         cb(null, `${fileName}`)
     }
+});
+
+const fileStorage2 = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/profiles/")
+    },
+    filename: (req, file, cb) => {
+        const fileName = file.originalname.replace(/\s+/g, '-');
+        cb(null, `${fileName}`)
+    }
 })
 
 const fileFilter = (req, file, cb) => {
@@ -21,4 +31,4 @@ const fileFilter = (req, file, cb) => {
     }
 }
 
-module.exports = { fileStorage, fileFilter }
+module.exports = { fileStorage, fileStorage2, fileFilter }

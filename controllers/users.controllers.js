@@ -2,8 +2,11 @@ const { PrismaClient } = require("@prisma/client");
 const { badRequestMessage, successMessageWithData } = require("../utils/message");
 const { signJwt, verifyJwt } = require("../utils/jwt");
 const { hashPassword, matchPassword } = require("../utils/password");
+const { ENV_PORT } = require('../environtment')
 
+const prisma = new PrismaClient()
 
+// login controllers
 async function loginController(req, res) {
   try {
     const { email, password } = req.body;
@@ -35,14 +38,15 @@ async function loginController(req, res) {
     const isPasswordValid = await matchPassword(password, user.password)
 
     if (!isPasswordValid) {
-      return res.send(badRequestMessage({messages: [
-        {
-          field: "Confirm Password",
-          message: "The password or confirmation password is not valid. Make sure your password meets the specified requirements"
-        },
-      ],
-    })
-    );
+      return res.send(badRequestMessage({
+        messages: [
+          {
+            field: "Confirm Password",
+            message: "The password or confirmation password is not valid. Make sure your password meets the specified requirements"
+          },
+        ],
+      })
+      );
     }
     const jwt = signJwt(user.id);
 
@@ -58,6 +62,7 @@ async function loginController(req, res) {
   }
 }
 
+// register controllers
 async function registerController(req, res) {
   try {
     const { username, fullname, password, confirmPassword, email, address } = req.body;
@@ -156,6 +161,110 @@ async function registerController(req, res) {
   }
 }
 
+// get userByIdUser
+const getUserByIdUser = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
 
+  try {
+    const getUser = await prisma.user.findMany({
+      where: {
+        id: parseToken.userId,
+        isDeleted: false,
+      },
+    });
 
-module.exports = { loginController, registerController };
+    if (!getUser) {
+      return res.send(badRequestMessage({
+        messages: {
+          message: "Request to profile error",
+        },
+      }));
+    };
+
+    return res.send(successMessageWithData(getUser));
+  } catch (error) {
+    console.log(error)
+    return res.send(badRequestMessage({
+      messages: {
+        message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+      }
+    }));
+  }
+}
+
+const updateProfileByIdUser = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+
+  try {
+    const { fullName, address, username } = req.body;
+    const photoUrl = req.file.path;
+
+    const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
+
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        isDeleted: false
+      },
+    });
+
+    // Validasi batas update username 7 hari
+    const lastUsernameUpdate = existingUser.updatedAt || 0;
+    const sevenDaysInMiliSecond = 7 * 24 * 60 * 60 * 1000;
+    const canUpdateUsername = Date.now() - lastUsernameUpdate > sevenDaysInMiliSecond;
+
+    if (username && !canUpdateUsername) {
+      return res.send(badRequestMessage({
+        messages: {
+          message: "Anda hanya dapat mengubah username sekali dalam 7 hari."
+        },
+      }));
+    };
+
+    // validasi agar tidak ada kesamaan dengan user lain
+    if (username && username !== existingUser.username) {
+      const isUsernameTaken = await prisma.user.findFirst({
+        where: {
+          username: username,
+          id: {
+            not: parseToken.userId
+          },
+        },
+      });
+
+      if (!isUsernameTaken) {
+        return res.send(badRequestMessage({
+          messages: {
+            message: "Username sudah digunakan, silakan pilih username lain",
+          },
+        }));
+      }
+    };
+
+    const updateProfileUser = await prisma.user.update({
+      where: {
+        id: parseToken.userId,
+      },
+      data: {
+        fullName,
+        address,
+        username: canUpdateUsername ? username : existingUser.username,
+        photoUrl: fileNameOnly,
+      },
+    });
+
+    return res.send(successMessageWithData({
+      messages: {
+        message: "sucess update data"
+      },
+    }));
+  } catch (error) {
+    return res.send(badRequestMessage({
+      messages: {
+        message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+      },
+    }));
+  };
+};
+
+module.exports = { loginController, registerController, getUserByIdUser, updateProfileByIdUser };
