@@ -2,6 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const { verifyJwt } = require("../utils/jwt");
 const { successMessageWithData, successCreateMessageWithData, badRequestMessage } = require("../utils/message");
 
+// GET ALBUM BY USER ID
 const getAlbumsByUserIdController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
@@ -17,6 +18,7 @@ const getAlbumsByUserIdController = async (req, res) => {
   return res.send(successMessageWithData(albums));
 };
 
+// GET DETAIL ALBUM
 const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
   const { albumId } = req.params;
 
@@ -40,7 +42,7 @@ const createAlbumByUserIdController = async (req, res) => {
   const prisma = new PrismaClient();
   const { title, description } = req.body;
 
-  
+
   if (!title) {
     return res.send(badRequestMessage({
       messages: {
@@ -48,7 +50,7 @@ const createAlbumByUserIdController = async (req, res) => {
       }
     }))
   };
-  
+
   const newAlbum = await prisma.album.create({
     data: {
       title: title,
@@ -76,7 +78,7 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
 
   const prisma = new PrismaClient();
 
-  const updateAlbum = prisma.album.update({
+  const updateAlbum = await prisma.album.update({
     where: {
       userId: parseToken.userId,
       id: albumId,
@@ -93,15 +95,38 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
 
   const prisma = new PrismaClient();
 
-  const deleteAlbum = await prisma.album.update({
-    where: {
-      id: albumId,
-    },
-    data: {
-      isDeleted: true,
-    },
-  });
+  try {
+    const deleteAlbum = await prisma.album.update({
+      where: {
+        id: albumId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    return res.send(successMessageWithData({
+      messages: {
+        message: "Succes delete"
+      },
+    }));
+  } catch (error) {
+    return res.send(badRequestMessage({
+      messages: {
+        message: "Internal server error"
+      }
+    }))
+  }
 };
+
+// add photo to album by albumId
+// const addPhotoToAlbum = async (req, res) => {
+//   const parseToken = verifyJwt(req.headers?.authorization);
+//   const {album} = req.params;
+
+//   const add
+// }
+
 
 module.exports = {
   getAlbumsByUserIdController,
