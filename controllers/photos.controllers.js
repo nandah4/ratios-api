@@ -27,6 +27,7 @@ const getPhoto = async (req, res) => {
                 }
             }
 
+
         const photos = await prisma.photo.findMany(searchQuery);
 
         return res.send(successMessageWithData(photos));
@@ -129,7 +130,7 @@ const createPhoto = async (req, res) => {
     try {
         const title = req.body.title
         const description = req.body.description
-        const locationFile = req.file.path
+        const locationFile = req.file.filename
 
         if (!title) {
             return res.send(badRequestMessage({
@@ -157,13 +158,13 @@ const createPhoto = async (req, res) => {
         };
 
         // Replace locationFile nama uploads/photos/
-        const fileNameOnly = locationFile.replace(/^uploads[\\\/]photos[\\\/]/, `http://localhost:${ENV_PORT}/files/images/photos/`);
+        // const fileNameOnly = locationFile.replace(/^uploads[\\\/]photos[\\\/]/, '');
 
         const newPhoto = await prisma.photo.create({
             data: {
                 title,
                 description,
-                locationFile: fileNameOnly,
+                locationFile: locationFile,
                 userId: parseToken.userId
             }
         });
