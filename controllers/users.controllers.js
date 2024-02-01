@@ -192,6 +192,7 @@ const getUserByIdUser = async (req, res) => {
   }
 }
 
+// update profile by iuser
 const updateProfileByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 

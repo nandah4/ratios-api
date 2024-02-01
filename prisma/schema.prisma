@@ -18,21 +18,21 @@ model User {
     createdAt DateTime   @default(now())
     updatedAt DateTime   @default(now())
     isDeleted Boolean    @default(false)
-    role Role @default(USER)
+    role      Role       @default(USER)
     photos    Photo[]
     albums    Album[]
     comentars Comentar[]
     likes     Like[]
-    followers Follows[] @relation("followers")
-    following Follows[] @relation("following")
+    followers Follows[]  @relation("followers")
+    following Follows[]  @relation("following")
 }
 
 model Follows {
-    follower User @relation("followers",fields: [followerId], references: [id])
-    followerId String 
+    follower   User   @relation("followers", fields: [followerId], references: [id])
+    followerId String
 
-    followingId String 
-    following User @relation("following",fields: [followingId], references: [id])
+    followingId String
+    following   User   @relation("following", fields: [followingId], references: [id])
 
     @@id([followerId, followingId])
 }
@@ -54,8 +54,8 @@ model Photo {
     user         User       @relation(fields: [userId], references: [id])
     comentars    Comentar[]
     likes        Like[]
-    albumId String?
-    album Album? @relation(fields: [albumId], references: [id])
+    albumId      String?
+    album        Album?     @relation(fields: [albumId], references: [id])
 }
 
 model Album {
@@ -64,7 +64,7 @@ model Album {
     user        User     @relation(fields: [userId], references: [id])
     title       String
     description String?
-    photos Photo[]
+    photos      Photo[]
     createdAt   DateTime @default(now())
     updatedAt   DateTime @default(now())
     isDeleted   Boolean  @default(false)

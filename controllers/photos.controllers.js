@@ -119,7 +119,7 @@ const createPhoto = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
 
     if (!req.file) {
-        return res.send(badRequestMessage({
+        return res.status(400).send(badRequestMessage({
             messages: {
                 message: "It looks empty here! Start by uploading your favorite photos to fill this space with memories."
             }

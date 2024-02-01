@@ -15,7 +15,7 @@ const getAlbumsByUserIdController = async (req, res) => {
     },
   });
 
-  return res.send(successMessageWithData(albums));
+  return res.status(200).send(successMessageWithData(albums));
 };
 
 // GET DETAIL ALBUM
@@ -32,6 +32,16 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
       userId: parseToken.userId,
       isDeleted: false,
     },
+    include: {
+      photos: {
+        where: {
+          isDeleted: false,
+        },
+        include: {
+          user: true
+        }
+      }
+    }
   });
 
   return res.send(successMessageWithData(album));
@@ -57,6 +67,7 @@ const createAlbumByUserIdController = async (req, res) => {
       description: description,
       userId: parseToken.userId,
     },
+    
   });
 
   return res.send(successCreateMessageWithData());
@@ -119,14 +130,129 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
   }
 };
 
-// add photo to album by albumId
-// const addPhotoToAlbum = async (req, res) => {
-//   const parseToken = verifyJwt(req.headers?.authorization);
-//   const {album} = req.params;
+//  ADD PHOTO TO ALBUM
+const addPhotoToAlbum = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const {albumId, photoId} = req.params;
+  // const {photoId} = req.body;
+  
+  const prisma = new PrismaClient();
 
-//   const add
-// }
+  try {
+    const findAlbum= await prisma.album.findFirst({
+      where: {
+        id: albumId,
+        userId: parseToken.userId,
+        isDeleted: false
+      },
+    });
 
+    const findPhoto = await prisma.photo.findFirst({
+      where: {
+        id: photoId,
+        userId: parseToken.userId,
+        isDeleted: false
+      },
+    });
+
+    if (!findAlbum) {
+      return res.send(badRequestMessage({
+        messages: {
+          message: "Album not found"
+        },
+      }));
+    } else if(!findPhoto) {
+      return res.send(badRequestMessage({
+        messages: {
+          message: "Foto not found"
+        }
+      }))
+    }
+
+    await prisma.photo.update({
+      where: {
+        id: photoId
+      },
+      data: {
+        albumId: albumId,
+      },
+    });
+
+    return res.send(successMessageWithData({
+      messages: {
+        message: "succes add photo to album"
+      }
+    }))
+  } catch (error) {
+    console.log(error);
+    return res.send(badRequestMessage({
+      messages: {
+        message: "Internal server error"
+      }
+    }))
+  };
+};
+
+// DELETE PHOTO FROM ALBUM
+const deletePhotoFromAlbum = async(req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const prisma = new PrismaClient();
+  const {albumId, photoId} = req.params;
+
+  try {
+    const findAlbum = await prisma.album.findFirst({
+      where: {
+        id: albumId,
+        userId: parseToken.userId,
+      },
+    });
+
+    const findPhoto = await prisma.photo.findFirst({
+      where: {
+        id: photoId,
+        userId: parseToken.userId,
+      }
+    });
+
+    if(!findAlbum) {
+      return res.status(404).send({
+        messages: {
+          message: "Album not found"
+        },
+      });
+    };
+
+    if(!findPhoto) {
+      return res.status(404).send({
+        messages: {
+          message: "Photo not found"
+        }
+      });
+    };
+
+    const deletePhoto = await prisma.photo.update({
+      where: {
+        id: photoId
+      },
+      data: {
+        albumId: null
+      },
+    });
+
+    return res.status(200).send(successMessageWithData({
+      messages: {
+        message: "Succes delete photo to album"
+      }
+    }))
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({
+      messages: {
+        message: "Internal Server Error",
+      },
+    });
+  };
+};
 
 module.exports = {
   getAlbumsByUserIdController,
@@ -134,4 +260,6 @@ module.exports = {
   getAlbumByAlbumIdAndUserIdController,
   updateAlbumByUserIdController: updateAlbumByAlbumIdAndUserIdController,
   deleteAlbumByAlbumIdAndUserIdController,
+  addPhotoToAlbum,
+  deletePhotoFromAlbum,
 };
