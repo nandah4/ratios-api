@@ -57,6 +57,7 @@ const getPhotoById = async (req, res) => {
                 isDeleted: false
             },
             include: {
+                user: true,
                 comentars: {
                     where: {
                         isDeleted: false,
@@ -128,48 +129,44 @@ const getPhotoByIdUser = async (req, res) => {
 const createPhoto = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
 
-    if (!req.file) {
-        return res.status(400).send(badRequestMessage({
-            messages: [
-                {
-                    message: "It looks empty here! Start by uploading your favorite photos to fill this space with memories."
-                },
-            ],
-        }));
-    };
-
     try {
-        const title = req.body.title;
-        const description = req.body.description;
-        const locationFile = req.file.filename;
+        const title = req.body?.title;
+        const description = req.body?.description;
+        const locationFile = req.file?.filename;
+
+        const error = [];
 
         if (!title) {
-            return res.status(400).send(badRequestMessage({
-                messages: [
-                    {
-                        field: "title",
-                        message: "Title is required when uploading a photo."
-                    },
-                ],
-            }))
+            error.push({
+                field: "title",
+                message: "Title is required when uploading a photo."
+            });
         };
-
         if (!description) {
+            error.push({
+                field: "description",
+                message: "Description is required when uploading a photo."
+            });
+        };
+        if(!locationFile) {
+            error.push({
+                field: "locationFile",
+                message: "It looks empty here! Start by uploading your favorite photos to fill this space with memories."
+            });
+        }
+
+        if (error.length !== 0) {
             return res.status(400).send(badRequestMessage({
                 messages: [
-                    {
-                        message: "Description is required when uploading a photo."
-                    },
+                    ...error
                 ],
             }));
-        };
-
+        }
         // Validasi Panjang Title
         if (title && title.length > MAX_TITLE) {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
-                        
                         message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
                     },
                 ],
@@ -230,7 +227,31 @@ const updatePhotoById = async (req, res) => {
             }))
         };
 
-        const { title, description } = req.body;
+        const title = req.body?.title;
+        const description = req.body?.description;
+        const error = [];
+
+        if (!title) {
+            error.push({
+                field: "title",
+                message: "Title is required when update a photo."
+            });
+        };
+        
+        if (!description) {
+            error.push({
+                field: "description",
+                message: "Description is required when update a photo."
+            });
+        };
+
+        if(error.length !== 0) {
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    ...error
+                ],
+            }));
+        };
 
         // Validasi Panjang Title
         if (title && title.length > MAX_TITLE) {
@@ -257,25 +278,6 @@ const updatePhotoById = async (req, res) => {
             }
         });
 
-        if (!title) {
-            return res.status(400).send(badRequestMessage({
-                messages: [
-                    {
-                        message: "Title is required when update a photo."
-                    },
-                ],
-            }));
-        };
-
-        if (!description) {
-            return res.status(400).send(badRequestMessage({
-                messages: [
-                    {
-                        message: "Description is required when uploading a photo."
-                    },
-                ],
-            }));
-        };
 
         return res.status(200).send(successMessageWithData(updatePhoto));
 
