@@ -108,8 +108,59 @@ async function loginController(req, res) {
 // register controllers
 async function registerController(req, res) {
   try {
-    const { username, fullname, password, confirmPassword, email, address } = req.body;
+    const username = req.body?.username;
+    const fullname = req.body?.fullname;
+    const password = req.body?.password;
+    const confirmPassword = req.body?.confirmPassword;
+    const email = req.body?.email;
+    const address = req.body?.address;
 
+    const error = [];
+
+    if(!username) {
+      error.push({
+        field: "username",
+        message: "username can not be empty"
+      });
+    }
+    if(!fullname) {
+      error.push({
+        field: "fullName",
+        message: "fullName can not be empty"
+      });
+    }
+    if(!password) {
+      error.push({
+        field: "password",
+        message: "password can not be empty"
+      });
+    }
+    if(!confirmPassword) {
+      error.push({
+        field: "confirm password",
+        message: "confirm password can not be empty"
+      });
+    }
+    if(!email) {
+      error.push({
+        field: "email",
+        message: "email can not be empty"
+      });
+    }
+    if(!address) {
+      error.push({
+        field: "addres",
+        message: "addrres can not be empty"
+      });
+    }
+
+    if(error.length !== 0) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          ...error
+        ],
+      }));
+    }
     if (confirmPassword !== password) {
       return res.status(400).send(
         badRequestMessage({

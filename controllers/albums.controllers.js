@@ -42,7 +42,7 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
         }
       }
     });
-    
+
     return res.send(successMessageWithData(album));
   } catch (error) {
     
@@ -56,6 +56,7 @@ const createAlbumByUserIdController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
   const prisma = new PrismaClient();
   const { title, description } = req.body;
+  
 
 
   if (!title) {
