@@ -8,9 +8,9 @@ const { createComentarById, deleteComentarById } = require("../controllers/comen
 const { createLikeByIdUser, deleteLikeByIdUser } = require("../controllers/like.controllers");
 
 // ROUTES PHOTO
-photosRoutes.get("/",   getPhoto); // all photo
+photosRoutes.get("/", getPhoto); // all photo
 photosRoutes.get("/user", authMiddleware, getPhotoByIdUser); // by id user
-photosRoutes.get("/:photoId", authMiddleware, getPhotoById); // by id photo
+photosRoutes.get("/:photoId", getPhotoById); // by id photo
 photosRoutes.post("/", authMiddleware, multer({ storage: fileStorage, fileFilter }).single('locationFile'), createPhoto);
 photosRoutes.delete("/:photoId", authMiddleware, deletePhotoById);
 photosRoutes.put("/:photoId", authMiddleware, updatePhotoById);

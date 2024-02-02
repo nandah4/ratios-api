@@ -24,19 +24,23 @@ const getPhoto = async (req, res) => {
             : {
                 where: {
                     isDeleted: false
-                }
-            }
-
+                },
+                include: {
+                    user: true
+                },
+            };
 
         const photos = await prisma.photo.findMany(searchQuery);
-
-        return res.send(successMessageWithData(photos));
+        return res.status(200).send(successMessageWithData(photos));
 
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            }
+        console.log(error);
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
         }));
     };
 };
@@ -50,7 +54,6 @@ const getPhotoById = async (req, res) => {
         const photo = await prisma.photo.findFirst({
             where: {
                 id: photoId,
-                userId: parseToken.userId,
                 isDeleted: false
             },
             include: {
@@ -71,21 +74,23 @@ const getPhotoById = async (req, res) => {
         });
 
         if (!photo) {
-            return res.send(badRequestMessage({
-                messages:
-                {
-                    message: "Photo not found or unauthorized access"
-                }
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Photo not found"
+                    },
+                ],
             }));
         };
 
-        return res.send(successMessageWithData(photo));
-
+        return res.status(200).send(successMessageWithData(photo));
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            },
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
         }));
     };
 };
@@ -95,22 +100,26 @@ const getPhotoByIdUser = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
 
     try {
-
         // Get All Foto User Id
         const getPhoto = await prisma.photo.findMany({
             where: {
                 userId: parseToken.userId,
                 isDeleted: false
             },
+            include: {
+                user: true
+            },
         });
-
-        return res.send(successMessageWithData(getPhoto));
+        return res.status(200).send(successMessageWithData(getPhoto));
 
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            },
+        console.log(error)
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
         }));
     };
 };
@@ -121,39 +130,47 @@ const createPhoto = async (req, res) => {
 
     if (!req.file) {
         return res.status(400).send(badRequestMessage({
-            messages: {
-                message: "It looks empty here! Start by uploading your favorite photos to fill this space with memories."
-            }
+            messages: [
+                {
+                    message: "It looks empty here! Start by uploading your favorite photos to fill this space with memories."
+                },
+            ],
         }));
     };
 
     try {
-        const title = req.body.title
-        const description = req.body.description
-        const locationFile = req.file.filename
+        const title = req.body.title;
+        const description = req.body.description;
+        const locationFile = req.file.filename;
 
         if (!title) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Title is required when uploading a photo."
-                }
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Title is required when uploading a photo."
+                    },
+                ],
             }))
         };
 
         if (!description) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Description is required when uploading a photo."
-                }
-            }))
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Description is required when uploading a photo."
+                    },
+                ],
+            }));
         };
 
         // Validasi Panjang Title
         if (title && title.length > MAX_TITLE) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
-                }
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
+                    },
+                ],
             }));
         };
 
@@ -164,22 +181,26 @@ const createPhoto = async (req, res) => {
             data: {
                 title,
                 description,
-                locationFile: locationFile,
+                locationFile,
                 userId: parseToken.userId
-            }
+            },
+            include: {
+                user: true,
+            },
         });
 
-        return res.send(successMessageWithData({
-            messages: {
-                message: "Hooray! Your photo has been uploaded successfully. Celebrate the moment!"
-            }
-        }));
+        return res.status(200).send(successMessageWithData(newPhoto));
+        //         message: "Hooray! Your photo has been uploaded successfully. Celebrate the moment!"
+
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            }
-        }))
+        console.log(error)
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
+        }));
     };
 };
 
@@ -198,10 +219,12 @@ const updatePhotoById = async (req, res) => {
         });
 
         if (!findPhoto) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Photo Not Found!"
-                }
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Photo Not Found!"
+                    }
+                ],
             }))
         };
 
@@ -209,114 +232,122 @@ const updatePhotoById = async (req, res) => {
 
         // Validasi Panjang Title
         if (title && title.length > MAX_TITLE) {
-            return res.send(badRequestMessage({
-                error,
-                messages: {
-                    message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
-                }
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
+                    },
+                ],
             }));
         };
 
-        // Validasi Panjang Description
-        // if (description && description.length > MAX_DESCRIPTION) {
-        //     return res.send(badRequestMessage({
-        //         messages: {
-        //             message: `Description length exceeds the maximum limit of ${MAX_DESCRIPTION} characters.`
-        //         }
-        //     }));
-        // };
-
         const updatePhoto = await prisma.photo.update({
             where: {
-                id: photoId
+                id: photoId,
+                userId: parseToken.userId,
             },
             data: {
                 title: title || findPhoto.title,
                 description: description || findPhoto.description
+            },
+            include: {
+                user: true
             }
         });
 
         if (!title) {
-            return res.status(404).send(badRequestMessage({
-                messages: {
-                    message: "Title is required when update a photo."
-                }
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Title is required when update a photo."
+                    },
+                ],
             }));
         };
 
         if (!description) {
-            return res.status(404).send(badRequestMessage({
-                messages: {
-                    message: "Description is required when uploading a photo."
-                }
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Description is required when uploading a photo."
+                    },
+                ],
             }));
         };
 
-        if (updatePhoto) {
-            return res.send(successMessageWithData({
-                messages: {
-                    message: "Photo Successfully update"
-                }
-            }));
-        };
+        return res.status(200).send(successMessageWithData(updatePhoto));
 
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            }
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
         }));
     };
 };
 
 // DELETE PHOTO
 const deletePhotoById = async (req, res) => {
-
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
-
     try {
+        const photoToDelete = await prisma.photo.findFirst({
+            where: {
+                id: photoId,
+                userId: parseToken.userId
+            },
+        });
+
+        if (!photoToDelete || photoToDelete.userId !== parseToken.userId) {
+            return res.status(403).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "You don`t have permission to delete this foto",
+                    },
+                ]
+            }))
+        }
 
         const deletePhoto = await prisma.photo.update({
             where: {
-                id: photoId
+                id: photoId,
+                userId: parseToken.userId,
             },
             data: {
                 isDeleted: true,
             },
         });
 
-        if (!deletePhoto || !deletePhoto.isDeleted) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Photo not found. Looks like it's on a coffee break. Don't worry, we're on it!"
-                }
-            }));
-        };
-
         // isDeleted to true to assocciated comments
         await prisma.comentar.updateMany({
             where: {
                 id: photoId,
+                userId: parseToken.userId
             },
             data: {
                 isDeleted: true
             },
         });
 
-        return res.send(successMessageWithData({
-            messages: {
-                message: "Photo deletion complete! Your memories are now a bit lighter."
-            }
+        return res.status(200).send(successMessageWithData({
+            messages: [
+                {
+                    message: "Photo deletion complete! Your memories are now a bit lighter."
+                },
+            ]
         }));
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            }
+        console.log(error)
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
         }));
     };
-
 
     // Ekstrak nama file dari lokasi file
     // const fileName = path.basename(photo.locationFile);

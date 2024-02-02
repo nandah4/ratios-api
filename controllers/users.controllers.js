@@ -20,45 +20,54 @@ async function loginController(req, res) {
     });
 
     if (!user) {
-      return res.send(badRequestMessage({
-        messages: {
-          message: "Email not found. Please double-check your email address or consider signing up if you don't have an account."
-        }
-      }))
-    };
-
-    if (!user.password) {
-      return res.send(badRequestMessage({
-        messages: {
-          message: "Password not set. Please set a password for your account to ensure security."
-        }
-      }))
-    };
-
-    const isPasswordValid = await matchPassword(password, user.password)
-
-    if (!isPasswordValid) {
-      return res.send(badRequestMessage({
+      return res.status(404).send(badRequestMessage({
+        error: "Email not found",
         messages: [
           {
-            field: "Confirm Password",
+            message: "Email not found. Please double-check your email address or consider signing up if you don't have an account."
+          },
+        ],
+      }));
+    };
+
+    // if (!user.password) {
+    //   return res.send(badRequestMessage({
+    //     error: "Password not entered",
+    //     messages: [
+    //       {
+    //         message: "Password not set. Please set a password for your account to ensure security."
+    //       },
+    //     ],
+    //   }))
+    // };
+
+    const isPasswordValid = await matchPassword(password, user.password)
+    if (!isPasswordValid) {
+      return res.status(400).send(badRequestMessage({
+        error: "Invalid password",
+        messages: [
+          {
             message: "The password or confirmation password is not valid. Make sure your password meets the specified requirements"
           },
         ],
       })
       );
-    }
+    };
     const jwt = signJwt(user.id);
 
-    return res.send(successMessageWithData({
+    return res.status(200).send(successMessageWithData({
       token: jwt,
     }));
 
   } catch (error) {
     console.log(error);
-    return res.status(500).json({
-      message: "Internal server error. Please try again later."
-    })
+    return res.status(500).send(badRequestMessage({
+      messages: [
+        {
+          message: "Internal server error"
+        }
+      ],
+    }))
   }
 }
 
@@ -68,11 +77,11 @@ async function registerController(req, res) {
     const { username, fullname, password, confirmPassword, email, address } = req.body;
 
     if (confirmPassword !== password) {
-      return res.send(
+      return res.status(400).send(
         badRequestMessage({
+          error: "Confirm Your Password",
           messages: [
             {
-              field: "confirmPassword",
               message: "Password and confirmation do not match.",
             },
           ],
@@ -155,9 +164,13 @@ async function registerController(req, res) {
       },
     });
 
-    return res.send(successMessageWithData(newUser));
+    return res.status(200).send(successMessageWithData(newUser));
   } catch (error) {
-    console.log(error);
+    return res.status(500).send(badRequestMessage({
+      messages: {
+        message: "Internal server error"
+      }
+    }))
   }
 }
 
@@ -174,20 +187,25 @@ const getUserByIdUser = async (req, res) => {
     });
 
     if (!getUser) {
-      return res.send(badRequestMessage({
-        messages: {
-          message: "Request to profile error",
-        },
+      return res.status(404).send(badRequestMessage({
+        error: "User not found",
+        messages: [
+          {
+            message: "User not found",
+          }
+        ],
       }));
     };
 
     return res.send(successMessageWithData(getUser));
   } catch (error) {
     console.log(error)
-    return res.send(badRequestMessage({
-      messages: {
-        message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
-      }
+    return res.status(500).send(badRequestMessage({
+      messages: [
+        {
+          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+        },
+      ]
     }));
   }
 }
@@ -198,9 +216,9 @@ const updateProfileByIdUser = async (req, res) => {
 
   try {
     const { fullName, address, username } = req.body;
-    const photoUrl = req.file.path;
+    const photoUrl = req.file.filename
 
-    const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
+    // const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
 
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -215,10 +233,12 @@ const updateProfileByIdUser = async (req, res) => {
     const canUpdateUsername = Date.now() - lastUsernameUpdate > sevenDaysInMiliSecond;
 
     if (username && !canUpdateUsername) {
-      return res.send(badRequestMessage({
-        messages: {
-          message: "Anda hanya dapat mengubah username sekali dalam 7 hari."
-        },
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          {
+            message: "You can only change your username once every 7 days."
+          },
+        ],
       }));
     };
 
@@ -234,10 +254,12 @@ const updateProfileByIdUser = async (req, res) => {
       });
 
       if (!isUsernameTaken) {
-        return res.send(badRequestMessage({
-          messages: {
-            message: "Username sudah digunakan, silakan pilih username lain",
-          },
+        return res.status(400).send(badRequestMessage({
+          messages: [
+            {
+              message: "Username is already in use, please choose another username",
+            },
+          ],
         }));
       }
     };
@@ -250,20 +272,19 @@ const updateProfileByIdUser = async (req, res) => {
         fullName,
         address,
         username: canUpdateUsername ? username : existingUser.username,
-        photoUrl: fileNameOnly,
+        photoUrl: photoUrl,
       },
     });
 
-    return res.send(successMessageWithData({
-      messages: {
-        message: "sucess update data"
-      },
-    }));
+    return res.status(200).send(successMessageWithData(updateProfileUser));
+
   } catch (error) {
-    return res.send(badRequestMessage({
-      messages: {
-        message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-      },
+    return res.status(500).send(badRequestMessage({
+      messages: [
+        {
+          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+        },
+      ],
     }));
   };
 };

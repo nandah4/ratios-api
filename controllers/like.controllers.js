@@ -19,10 +19,12 @@ const createLikeByIdUser = async (req, res) => {
         });
 
         if (existingLike) {
-            return res.send(badRequestMessage({
-                messages: {
-                    messages: "Oops! You've already liked this photo."
-                },
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Oops! You've already liked this photo."
+                    },
+                ],
             }));
         };
 
@@ -32,20 +34,26 @@ const createLikeByIdUser = async (req, res) => {
                 userId: parseToken.userId,
                 photoId: photoId,
             },
+            include: {
+                user: true
+            }
         });
 
-        return res.send(successMessageWithData({
-            messages: {
-                messages: "You've successfully liked the photo! 🎉"
-            },
-        }));
+        return res.status(200).send(successMessageWithData(createLike));
+        // return res.send(successMessageWithData({
+        //     messages: {
+        //         messages: "You've successfully liked the photo! 🎉"
+        //     },
+        // }));
 
     } catch (error) {
         console.log(error);
         return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            },
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
         }));
     };
 };
@@ -65,32 +73,32 @@ const deleteLikeByIdUser = async (req, res) => {
         });
 
         if (!existingLike) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Oops! It seems like you haven't liked this photo yet. Give it a thumbs up and spread the love!"
-                },
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Oops! It seems like you haven't liked this photo yet. Give it a thumbs up and spread the love!"
+                    },
+                ]
             }));
         };
 
         await prisma.like.delete({
             where: {
-                userId_photoId:{
+                userId_photoId: {
                     userId: parseToken.userId,
                     photoId: photoId
                 }
             },
         });
 
-        return res.send(successMessageWithData({
-            messages: {
-                message: "You've successfully unliked the photo. It's no longer in your liked collection. Keep exploring!"
-            },
-        }));
+        return res.status(200).send(successMessageWithData());
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            },
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ]
         }));
     };
 };

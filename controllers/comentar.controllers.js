@@ -19,19 +19,23 @@ const createComentarById = async (req, res) => {
         });
 
         if (!findPhoto) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Photo not found"
-                },
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Photo not found"
+                    },
+                ]
             }));
         };
 
         if (!comentar) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Oops! It seems like you forgot to add your comment. Please make sure to enter your comment before submitting."
-                }
-            }))
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Oops! It seems like you forgot to add your comment. Please make sure to enter your comment before submitting."
+                    },
+                ],
+            }));
         };
 
         const createdComentar = await prisma.comentar.create({
@@ -42,18 +46,21 @@ const createComentarById = async (req, res) => {
             },
         });
 
-        return res.send(successMessageWithData({
-            messages: {
-                message: "Comment successfully created!",
-                additionalInfo: "Your thoughts have been shared. Thanks for contributing!"
-            },
-        }));
+        return res.status(200).send(successMessageWithData(createdComentar));
+        // return res.send(successMessageWithData({
+        //     messages: {
+        //         message: "Comment successfully created!",
+        //         additionalInfo: "Your thoughts have been shared. Thanks for contributing!"
+        //     },
+        // }));
 
     } catch (error) {
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            },
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
         }));
     };
 };
@@ -75,25 +82,25 @@ const deleteComentarById = async (req, res) => {
         });
 
         if (!deleteComentar) {
-            return res.send(badRequestMessage({
-                messages: {
-                    message: "Comment Not Found"
-                },
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        message: "Comment Not Found"
+                    },
+                ],
             }));
         };
 
-        return res.send(successMessageWithData({
-            messages: {
-                message: "Comment successfully deleted!",
-            },
-        }));
+        return res.status(200).send(successMessageWithData());
 
     } catch (error) {
         console.log(error)
-        return res.send(badRequestMessage({
-            messages: {
-                message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-            }
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                }     
+            ] 
         }));
     }
 };
