@@ -9,8 +9,31 @@ const prisma = new PrismaClient()
 // login controllers
 async function loginController(req, res) {
   try {
-    const { email, password } = req.body;
+    const email = req.body?.email;
+    const password = req.body?.password;
 
+    const error = [];
+    if (!email) {
+      error.push({
+        field: "email",
+        message: "email kosong",
+      })
+    }
+
+    if (!password) {
+      error.push({
+        field: "password",
+        message: "password kocong",
+      });
+    };
+
+    if (error.length !== 0) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          ...error
+        ]
+      }));
+    }
     const prisma = new PrismaClient()
 
     const user = await prisma.user.findFirst({
@@ -18,6 +41,15 @@ async function loginController(req, res) {
         email: email,
       }
     });
+
+    if (!email) {
+      return res.status(400).send(badRequestMessage({
+        messages: {
+          field: "email",
+          password: "Email mus"
+        }
+      }))
+    }
 
     if (!user) {
       return res.status(404).send(badRequestMessage({
