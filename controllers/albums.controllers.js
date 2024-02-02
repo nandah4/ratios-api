@@ -21,30 +21,35 @@ const getAlbumsByUserIdController = async (req, res) => {
 // GET DETAIL ALBUM
 const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
   const { albumId } = req.params;
-
   const parseToken = verifyJwt(req.headers?.authorization);
-
   const prisma = new PrismaClient();
 
-  const album = await prisma.album.findFirst({
-    where: {
-      id: albumId,
-      userId: parseToken.userId,
-      isDeleted: false,
-    },
-    include: {
-      photos: {
-        where: {
-          isDeleted: false,
-        },
-        include: {
-          user: true
+  try {
+    const album = await prisma.album.findFirst({
+      where: {
+        id: albumId,
+        userId: parseToken.userId,
+        isDeleted: false,
+      },
+      include: {
+        photos: {
+          where: {
+            isDeleted: false,
+          },
+          include: {
+            user: true
+          }
         }
       }
-    }
-  });
+    });
+    
+    return res.send(successMessageWithData(album));
+  } catch (error) {
+    
+  }
 
-  return res.send(successMessageWithData(album));
+  
+
 };
 
 const createAlbumByUserIdController = async (req, res) => {

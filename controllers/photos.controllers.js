@@ -147,6 +147,7 @@ const createPhoto = async (req, res) => {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
+                        field: "title",
                         message: "Title is required when uploading a photo."
                     },
                 ],
@@ -168,6 +169,7 @@ const createPhoto = async (req, res) => {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
+                        
                         message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
                     },
                 ],

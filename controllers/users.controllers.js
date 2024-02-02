@@ -24,6 +24,7 @@ async function loginController(req, res) {
         error: "Email not found",
         messages: [
           {
+            email: "email",
             message: "Email not found. Please double-check your email address or consider signing up if you don't have an account."
           },
         ],
@@ -47,6 +48,7 @@ async function loginController(req, res) {
         error: "Invalid password",
         messages: [
           {
+            field: "password",
             message: "The password or confirmation password is not valid. Make sure your password meets the specified requirements"
           },
         ],
@@ -82,6 +84,7 @@ async function registerController(req, res) {
           error: "Confirm Your Password",
           messages: [
             {
+              field: "Password",
               message: "Password and confirmation do not match.",
             },
           ],
@@ -191,6 +194,7 @@ const getUserByIdUser = async (req, res) => {
         error: "User not found",
         messages: [
           {
+            field: "username",
             message: "User not found",
           }
         ],
@@ -236,6 +240,7 @@ const updateProfileByIdUser = async (req, res) => {
       return res.status(400).send(badRequestMessage({
         messages: [
           {
+            field: "username",
             message: "You can only change your username once every 7 days."
           },
         ],
@@ -257,6 +262,7 @@ const updateProfileByIdUser = async (req, res) => {
         return res.status(400).send(badRequestMessage({
           messages: [
             {
+              field: "username",
               message: "Username is already in use, please choose another username",
             },
           ],
