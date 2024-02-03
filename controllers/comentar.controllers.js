@@ -8,20 +8,22 @@ const prisma = new PrismaClient;
 const createComentarById = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
-    const { comentar } = req.body;
+
+    const comentar = req.body?.comentar;
 
     try {
         const findPhoto = await prisma.photo.findFirst({
             where: {
                 id: photoId,
                 isDeleted: false,
-            }
+            },
         });
 
         if (!findPhoto) {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {
+                        field: "photoId",
                         message: "Photo not found"
                     },
                 ]
@@ -32,7 +34,8 @@ const createComentarById = async (req, res) => {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
-                        message: "Oops! It seems like you forgot to add your comment. Please make sure to enter your comment before submitting."
+                        field: "Comentar",
+                        message: "Oops! Please make sure to enter your comment before submitting."
                     },
                 ],
             }));
@@ -44,6 +47,9 @@ const createComentarById = async (req, res) => {
                 photoId: photoId,
                 comentar: comentar
             },
+            include: {
+                user: true
+            }
         });
 
         return res.status(200).send(successMessageWithData(createdComentar));
@@ -65,12 +71,33 @@ const createComentarById = async (req, res) => {
     };
 };
 
+// UPDATE COMENTAR BY USER ID DAN ID COMENT
+
+
 // DELETE COMENTAR BY ID COMENTAR
 const deleteComentarById = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
     const { comentarId } = req.params;
 
     try {
+        const findComentar = await prisma.comentar.findUnique({
+            where: {
+                id: comentarId,
+                isDeleted: false
+            },
+        });
+
+        if (!findComentar) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "comentarId",
+                        message: "Comentar not found"
+                    },
+                ],
+            }));
+        };
+
         const deleteComentar = await prisma.comentar.update({
             where: {
                 id: comentarId,
@@ -81,16 +108,6 @@ const deleteComentarById = async (req, res) => {
             },
         });
 
-        if (!deleteComentar) {
-            return res.status(404).send(badRequestMessage({
-                messages: [
-                    {
-                        message: "Comment Not Found"
-                    },
-                ],
-            }));
-        };
-
         return res.status(200).send(successMessageWithData());
 
     } catch (error) {
@@ -99,8 +116,8 @@ const deleteComentarById = async (req, res) => {
             messages: [
                 {
                     message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-                }     
-            ] 
+                }
+            ]
         }));
     }
 };

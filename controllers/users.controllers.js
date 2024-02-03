@@ -42,15 +42,6 @@ async function loginController(req, res) {
       }
     });
 
-    if (!email) {
-      return res.status(400).send(badRequestMessage({
-        messages: {
-          field: "email",
-          password: "Email mus"
-        }
-      }))
-    }
-
     if (!user) {
       return res.status(404).send(badRequestMessage({
         error: "Email not found",
@@ -77,11 +68,10 @@ async function loginController(req, res) {
     const isPasswordValid = await matchPassword(password, user.password)
     if (!isPasswordValid) {
       return res.status(400).send(badRequestMessage({
-        error: "Invalid password",
         messages: [
           {
             field: "password",
-            message: "The password or confirmation password is not valid. Make sure your password meets the specified requirements"
+            message: "The password is not valid. Make sure your password meets the specified requirements"
           },
         ],
       })
@@ -98,7 +88,7 @@ async function loginController(req, res) {
     return res.status(500).send(badRequestMessage({
       messages: [
         {
-          message: "Internal server error"
+          message: "Internal server error",
         }
       ],
     }))

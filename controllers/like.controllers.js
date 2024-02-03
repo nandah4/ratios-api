@@ -10,6 +10,25 @@ const createLikeByIdUser = async (req, res) => {
     const { photoId } = req.params;
 
     try {
+        // validasi find photo 
+        const existingPhoto = await prisma.photo.findUnique({
+            where: {
+                id: photoId,
+                isDeleted: false
+            },
+        });
+
+        if (!existingPhoto) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "photoId",
+                        message: "Photo not found"
+                    },
+                ],
+            }));
+        };
+
         // cek apakah user sudah like photo tsb
         const existingLike = await prisma.like.findFirst({
             where: {
@@ -22,6 +41,7 @@ const createLikeByIdUser = async (req, res) => {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
+                        field: "photoId and userId",
                         message: "Oops! You've already liked this photo."
                     },
                 ],
@@ -40,11 +60,6 @@ const createLikeByIdUser = async (req, res) => {
         });
 
         return res.status(200).send(successMessageWithData(createLike));
-        // return res.send(successMessageWithData({
-        //     messages: {
-        //         messages: "You've successfully liked the photo! 🎉"
-        //     },
-        // }));
 
     } catch (error) {
         console.log(error);
@@ -64,6 +79,25 @@ const deleteLikeByIdUser = async (req, res) => {
     const { photoId } = req.params;
 
     try {
+        // validasi find photo
+        const findPhoto = await prisma.photo.findUnique({
+            where: {
+                id: photoId,
+                isDeleted: false
+            }
+        });
+
+        if (!findPhoto) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "photoId",
+                        message: "Photo not found",
+                    },
+                ],
+            }));
+        };
+
         // cek apakah user sudah like atau belum
         const existingLike = await prisma.like.findFirst({
             where: {
@@ -76,6 +110,7 @@ const deleteLikeByIdUser = async (req, res) => {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
+                        field: "photoId and userId",
                         message: "Oops! It seems like you haven't liked this photo yet. Give it a thumbs up and spread the love!"
                     },
                 ]

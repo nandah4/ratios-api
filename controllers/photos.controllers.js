@@ -3,7 +3,6 @@ const MAX_TITLE = 200;
 const { PrismaClient } = require('@prisma/client');
 const { badRequestMessage, successMessageWithData } = require("../utils/message");
 const { verifyJwt } = require("../utils/jwt");
-const fs = require('fs/promises');
 const { ENV_PORT } = require('../environtment');
 
 const prisma = new PrismaClient();
@@ -78,6 +77,7 @@ const getPhotoById = async (req, res) => {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {
+                        field: "id",
                         message: "Photo not found"
                     },
                 ],
@@ -148,7 +148,7 @@ const createPhoto = async (req, res) => {
                 message: "Description is required when uploading a photo."
             });
         };
-        if(!locationFile) {
+        if (!locationFile) {
             error.push({
                 field: "locationFile",
                 message: "It looks empty here! Start by uploading your favorite photos to fill this space with memories."
@@ -167,14 +167,12 @@ const createPhoto = async (req, res) => {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
+                        field: "title",
                         message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
                     },
                 ],
             }));
         };
-
-        // Replace locationFile nama uploads/photos/
-        // const fileNameOnly = locationFile.replace(/^uploads[\\\/]photos[\\\/]/, '');
 
         const newPhoto = await prisma.photo.create({
             data: {
@@ -221,6 +219,7 @@ const updatePhotoById = async (req, res) => {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {
+                        field: "photoId",
                         message: "Photo Not Found!"
                     }
                 ],
@@ -237,7 +236,7 @@ const updatePhotoById = async (req, res) => {
                 message: "Title is required when update a photo."
             });
         };
-        
+
         if (!description) {
             error.push({
                 field: "description",
@@ -245,7 +244,7 @@ const updatePhotoById = async (req, res) => {
             });
         };
 
-        if(error.length !== 0) {
+        if (error.length !== 0) {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     ...error
@@ -258,6 +257,7 @@ const updatePhotoById = async (req, res) => {
             return res.status(400).send(badRequestMessage({
                 messages: [
                     {
+                        field: "title",
                         message: `Title length exceeds the maximum limit of ${MAX_TITLE} characters.`
                     },
                 ],
@@ -277,7 +277,6 @@ const updatePhotoById = async (req, res) => {
                 user: true
             }
         });
-
 
         return res.status(200).send(successMessageWithData(updatePhoto));
 
@@ -308,11 +307,28 @@ const deletePhotoById = async (req, res) => {
             return res.status(403).send(badRequestMessage({
                 messages: [
                     {
+                        field: "userId",
                         message: "You don`t have permission to delete this foto",
                     },
                 ]
             }))
         }
+
+        // isDeleted to true to assocciated comments
+        await prisma.comentar.updateMany({
+            where: {
+                photoId: photoId,
+            },
+            data: {
+                isDeleted: true
+            },
+        });
+
+        await prisma.like.deleteMany({
+            where: {
+                photoId: photoId,
+            },
+        });
 
         const deletePhoto = await prisma.photo.update({
             where: {
@@ -321,17 +337,6 @@ const deletePhotoById = async (req, res) => {
             },
             data: {
                 isDeleted: true,
-            },
-        });
-
-        // isDeleted to true to assocciated comments
-        await prisma.comentar.updateMany({
-            where: {
-                id: photoId,
-                userId: parseToken.userId
-            },
-            data: {
-                isDeleted: true
             },
         });
 
@@ -352,11 +357,6 @@ const deletePhotoById = async (req, res) => {
             ],
         }));
     };
-
-    // Ekstrak nama file dari lokasi file
-    // const fileName = path.basename(photo.locationFile);
-
-    // Hapus file photo dari file proyek        
 }
 
 module.exports = { getPhoto, getPhotoById, getPhotoByIdUser, createPhoto, updatePhotoById, deletePhotoById };
