@@ -435,7 +435,7 @@ const loginAdminController = async (req, res) => {
         messages: [
           {
             field: "email",
-            messages: "Email not found",
+            message: "Email not found",
           },
         ],
       }));
