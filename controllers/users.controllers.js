@@ -250,7 +250,7 @@ async function registerController(req, res) {
   }
 }
 
-// get userByIdUser
+// get my profile
 const getUserByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
@@ -264,7 +264,6 @@ const getUserByIdUser = async (req, res) => {
 
     if (!getUser) {
       return res.status(404).send(badRequestMessage({
-        error: "User not found",
         messages: [
           {
             field: "username",
@@ -287,6 +286,35 @@ const getUserByIdUser = async (req, res) => {
   }
 }
 
+// get other user profile
+const getOtherUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const findUser = await prisma.user.findMany({
+      where: {
+        id: userId,
+        isDeleted: false
+      },
+    });
+
+    if(findUser.length === 0) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId",
+            message: "User not found",
+          },
+        ],
+      }));
+    };
+
+    return res.status(200).send(successMessageWithData(findUser));
+  } catch (error) {
+    console.log(error);
+  };
+};
+
 // update profile by iduser
 const updateProfileByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -298,28 +326,28 @@ const updateProfileByIdUser = async (req, res) => {
     const username = req.body?.username;
     const photoUrl = req.file?.filename
 
-  const error = [];
-  if(!fullName) {
-    error.push({
-      field: "fullname",
-      message: "Full Name is required when update the profile",
-    })
-  }
-  if(!address) {
-    error.push({
-      field: "address",
-      message: "Address is required when update the profile",
-    });
-  }
-  
+    const error = [];
+    if (!fullName) {
+      error.push({
+        field: "fullname",
+        message: "Full Name is required when update the profile",
+      })
+    }
+    if (!address) {
+      error.push({
+        field: "address",
+        message: "Address is required when update the profile",
+      });
+    }
 
-  if(error.length !== 0) {
-    return res.status(400).send(badRequestMessage({
-      messages: [
-        ...error
-      ]
-    }))
-  }
+
+    if (error.length !== 0) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          ...error
+        ]
+      }))
+    }
     // const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
 
     const existingUser = await prisma.user.findUnique({
@@ -475,4 +503,4 @@ const loginAdminController = async (req, res) => {
   }
 }
 
-module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, updateProfileByIdUser };
+module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, getOtherUser, updateProfileByIdUser };
