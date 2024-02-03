@@ -287,14 +287,39 @@ const getUserByIdUser = async (req, res) => {
   }
 }
 
-// update profile by iuser
+// update profile by iduser
 const updateProfileByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
   try {
-    const { fullName, address, username } = req.body;
-    const photoUrl = req.file.filename
 
+    const fullName = req.body?.fullName;
+    const address = req.body?.address;
+    const username = req.body?.username;
+    const photoUrl = req.file?.filename
+
+  const error = [];
+  if(!fullName) {
+    error.push({
+      field: "fullname",
+      message: "Full Name is required when update the profile",
+    })
+  }
+  if(!address) {
+    error.push({
+      field: "address",
+      message: "Address is required when update the profile",
+    });
+  }
+  
+
+  if(error.length !== 0) {
+    return res.status(400).send(badRequestMessage({
+      messages: [
+        ...error
+      ]
+    }))
+  }
     // const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
 
     const existingUser = await prisma.user.findUnique({

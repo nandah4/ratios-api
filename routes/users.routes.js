@@ -7,7 +7,7 @@ const {fileStorage2, fileFilter} = require('../middlewares/photoMiddleware');
 const usersRoutes = express.Router();
 
 // login admin
-usersRoutes.post("/auth/admin/login", loginAdminController);
+usersRoutes.post("/auth/login/admin", loginAdminController);
 
 // login dan register controllers
 usersRoutes.post("/auth/login", loginController);

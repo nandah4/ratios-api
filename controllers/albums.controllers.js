@@ -213,35 +213,66 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
   const prisma = new PrismaClient();
 
   try {
-    // const findAlbum = await prisma.album.findFirst({
-    //   where: {
-    //     id: albumId,
-    //     userId: parseToken.userId,
-    //   },
-    // });
-
-    const deleteAlbum = await prisma.album.update({
+    const findAlbum = await prisma.album.findFirst({
       where: {
         id: albumId,
         userId: parseToken.userId,
       },
-      data: {
-        isDeleted: true,
-      },
     });
-    if (!deleteAlbum) {
+
+    if(!findAlbum) {
       return res.status(404).send(badRequestMessage({
         messages: [
           {
             field: "albumId or userId",
-            message: "Album not found",
+            message: "Album not found or you don't have permission to delete this album.",
           },
         ],
       }));
     };
 
+    await prisma.photo.updateMany({
+      where: {
+        id: albumId,
+      },
+      data: {
+        albumId: null,
+      },
+    })
+
+    await prisma.photo.updateMany({
+      where: {
+        albumId: albumId,
+        userId: parseToken.userId,
+      },
+      data: {
+        albumId: null
+      },
+    })
+
+    await prisma.album.update({
+      where: {
+        id: albumId
+      },
+      data: {
+        isDeleted: true,
+      },
+
+    });
+    // if (!deleteAlbum) {
+    //   return res.status(404).send(badRequestMessage({
+    //     messages: [
+    //       {
+    //         field: "albumId or userId",
+    //         message: "Album not found",
+    //       },
+    //     ],
+    //   }));
+    // };
+
     return res.status(200).send(successMessageWithData());
   } catch (error) {
+    console.log(error);
     return res.send(badRequestMessage({
       messages: {
         message: "Internal server error"
@@ -265,7 +296,23 @@ const addPhotoToAlbum = async (req, res) => {
         userId: parseToken.userId,
         isDeleted: false
       },
+      include: {
+        photos: {
+          include: {
+            user: true,
+          }
+        }
+      }
     });
+
+    if (!findAlbum) {
+      return res.status(404).send(badRequestMessage({
+        messages: {
+          field: "albumId or userId",
+          message: "Album not found"
+        },
+      }));
+    };
 
     const findPhoto = await prisma.photo.findFirst({
       where: {
@@ -274,22 +321,15 @@ const addPhotoToAlbum = async (req, res) => {
         isDeleted: false
       },
     });
-
-    if (!findAlbum) {
-      return res.send(badRequestMessage({
-        messages: {
-          field: "albumId or userId",
-          message: "Album not found"
-        },
-      }));
-    } else if (!findPhoto) {
-      return res.send(badRequestMessage({
+    
+    if (!findPhoto) {
+      return res.status(404).send(badRequestMessage({
         messages: {
           field: "photoId or userId",
           message: "Foto not found"
-        }
-      }))
-    }
+        },
+      }));
+    };
 
     await prisma.photo.update({
       where: {
@@ -300,14 +340,11 @@ const addPhotoToAlbum = async (req, res) => {
       },
     });
 
-    return res.send(successMessageWithData({
-      messages: {
-        message: "succes add photo to album"
-      }
-    }))
+    return res.status(200).send(successMessageWithData(findAlbum))
+
   } catch (error) {
     console.log(error);
-    return res.send(badRequestMessage({
+    return res.status(500).send(badRequestMessage({
       messages: {
         message: "Internal server error"
       }
@@ -337,11 +374,11 @@ const deletePhotoFromAlbum = async (req, res) => {
     });
 
     if (!findAlbum) {
-      return res.status(404).send({
+      return res.status(404).send(badRequestMessage({
         messages: {
           message: "Album not found"
         },
-      });
+      }));
     };
 
     if (!findPhoto) {
@@ -361,11 +398,8 @@ const deletePhotoFromAlbum = async (req, res) => {
       },
     });
 
-    return res.status(200).send(successMessageWithData({
-      messages: {
-        message: "Succes delete photo to album"
-      }
-    }))
+    return res.status(200).send(successMessageWithData());
+
   } catch (error) {
     console.log(error);
     return res.status(500).send({
