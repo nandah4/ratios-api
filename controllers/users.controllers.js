@@ -39,12 +39,12 @@ async function loginController(req, res) {
     const user = await prisma.user.findFirst({
       where: {
         email: email,
+        role: 'USER'
       }
     });
 
     if (!user) {
       return res.status(404).send(badRequestMessage({
-        error: "Email not found",
         messages: [
           {
             email: "email",
@@ -107,44 +107,44 @@ async function registerController(req, res) {
 
     const error = [];
 
-    if(!username) {
+    if (!username) {
       error.push({
         field: "username",
         message: "username can not be empty"
       });
     }
-    if(!fullname) {
+    if (!fullname) {
       error.push({
         field: "fullName",
         message: "fullName can not be empty"
       });
     }
-    if(!password) {
+    if (!password) {
       error.push({
         field: "password",
         message: "password can not be empty"
       });
     }
-    if(!confirmPassword) {
+    if (!confirmPassword) {
       error.push({
         field: "confirm password",
         message: "confirm password can not be empty"
       });
     }
-    if(!email) {
+    if (!email) {
       error.push({
         field: "email",
         message: "email can not be empty"
       });
     }
-    if(!address) {
+    if (!address) {
       error.push({
         field: "addres",
         message: "addrres can not be empty"
       });
     }
 
-    if(error.length !== 0) {
+    if (error.length !== 0) {
       return res.status(400).send(badRequestMessage({
         messages: [
           ...error
@@ -368,4 +368,86 @@ const updateProfileByIdUser = async (req, res) => {
   };
 };
 
-module.exports = { loginController, registerController, getUserByIdUser, updateProfileByIdUser };
+
+// login admin
+const loginAdminController = async (req, res) => {
+  const email = req.body?.email;
+  const password = req.body?.password;
+
+  try {
+    const error = [];
+
+    if (!email) {
+      error.push({
+        field: "email",
+        message: "email cannot be empty"
+      });
+    };
+    if (!password) {
+      error.push({
+        field: "password",
+        message: "password cannot be empty"
+      });
+    };
+
+    if (error.length !== 0) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          ...error
+        ],
+      }));
+    };
+
+    const findAdmin = await prisma.user.findFirst({
+      where: {
+        email: email,
+        role: 'ADMIN',
+      },
+    });
+
+    if (!findAdmin) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "email",
+            messages: "Email not found",
+          },
+        ],
+      }));
+    };
+
+    const isPasswordValid = await matchPassword(password, findAdmin.password);
+    if (!isPasswordValid) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          {
+            field: "password",
+            message: "The password is not valid"
+          },
+        ],
+      }));
+    };
+
+    if (findAdmin.role !== "ADMIN") {
+      return res.status(403).send(badRequestMessage({
+        messages: [
+          {
+            field: "role",
+            message: "You don't have permission to access this resource. Please log in with an admin account."
+          },
+        ],
+      }));
+    };
+
+    const jwt = signJwt(findAdmin.id);
+
+    return res.status(200).send(successMessageWithData({
+      token: jwt
+    }));
+
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, updateProfileByIdUser };

@@ -1,10 +1,13 @@
 const express = require("express");
 const { authMiddleware } = require('../middlewares/authMiddleware')
-const { loginController, registerController, getUserByIdUser, updateProfileByIdUser } = require("../controllers/users.controllers");
+const { loginController, loginAdminController,registerController, getUserByIdUser, updateProfileByIdUser } = require("../controllers/users.controllers");
 const multer = require('multer');
 const {fileStorage2, fileFilter} = require('../middlewares/photoMiddleware');
 
 const usersRoutes = express.Router();
+
+// login admin
+usersRoutes.post("/auth/admin/login", loginAdminController);
 
 // login dan register controllers
 usersRoutes.post("/auth/login", loginController);
