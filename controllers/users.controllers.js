@@ -151,7 +151,7 @@ async function registerController(req, res) {
         ],
       }));
     }
- 
+
     if (confirmPassword !== password) {
       return res.status(400).send(
         badRequestMessage({
@@ -167,7 +167,7 @@ async function registerController(req, res) {
     }
 
     const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-    if(!usernameRegex.test(username)) {
+    if (!usernameRegex.test(username)) {
       return res.status(400).send(
         badRequestMessage({
           messages: [
@@ -306,35 +306,60 @@ function isValidUUID(uuid) {
   return uuidRegex.test(uuid);
 }
 
-// get other user profile
+// get other user profile 
 const getOtherUser = async (req, res) => {
   const { identifier } = req.params;
   try {
     let findUser;
 
-      if (isValidUUID(identifier)) {
-        findUser = await prisma.user.findMany({
-          where: {
-            id: identifier,
-            isDeleted: false,
+    if (isValidUUID(identifier)) {
+      findUser = await prisma.user.findMany({
+        where: {
+          id: identifier,
+          isDeleted: false,
+        },
+        include: {
+          photos: {
+            where: {
+              isDeleted: false
+            },
           },
-        });
-      } else  {
-        findUser = await prisma.user.findMany({
-          where: {
-            username: identifier,
-            isDeleted: false,
+          albums: {
+            where: {
+              isDeleted: false
+            }
+          }
+        },
+      });
+    } else {
+      findUser = await prisma.user.findMany({
+        where: {
+          username: identifier,
+          isDeleted: false,
+        },
+        
+        include: {
+          photos: {
+            where: {
+              isDeleted: false
+            },
           },
-        });
-      };
-    
+          albums: {
+            where: {
+              isDeleted: false
+            }
+          }
+        },
+      });
+    };
+
 
     if (findUser.length === 0) {
       return res.status(404).send(badRequestMessage({
         messages: [
           {
-            field: isValidUUID(identifier)? " " : "username or userId",
-            message: isValidUUID(identifier)? "User not found" : "user with the specified username not found",
+            field: isValidUUID(identifier) ? " " : "username or userId",
+            message: isValidUUID(identifier) ? "User not found" : "user with the specified username not found",
           },
         ],
       }));
@@ -387,7 +412,7 @@ const updateProfileByIdUser = async (req, res) => {
     }
 
     const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-    if(!usernameRegex.test(username)) {
+    if (!usernameRegex.test(username)) {
       return res.status(400).send(badRequestMessage({
         messages: [
           {
@@ -470,7 +495,6 @@ const updateProfileByIdUser = async (req, res) => {
   };
 };
 
-
 // login admin
 const loginAdminController = async (req, res) => {
   const email = req.body?.email;
@@ -552,4 +576,48 @@ const loginAdminController = async (req, res) => {
   }
 }
 
+
+// get post photo other user detail with userId
+// const getPostOtherUser = async (req, res) => {
+//   const { userId } = req.params;
+
+//   try {
+//     const getUser = await prisma.user.findFirst({
+//       where: {
+//         id: userId,
+//         isDeleted: false
+//       },
+//       include: {
+//         photos: {
+//           where: {
+//             userId: userId,
+//             isDeleted: false
+//           },
+//         },
+//         albums: {
+//           where: {
+//             userId: userId,
+//             isDeleted: false
+//           },
+//         },
+//       },
+//     });
+
+//     if(!getUser || getUser.length === 0) {
+//       return res.status(404).send(badRequestMessage({
+//         messages: [
+//           {
+//             field: "userId",
+//             message: "user not found",
+//           },
+//         ],
+//       }));
+//     };
+
+//     return res.status(200).send(successMessageWithData(getUser))
+//   } catch (error) {
+//     console.log(error);
+//   }
+
+// }
 module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, getOtherUser, updateProfileByIdUser };

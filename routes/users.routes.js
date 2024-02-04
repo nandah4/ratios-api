@@ -24,4 +24,6 @@ usersRoutes.get("/account", authMiddleware, getUserByIdUser);
 usersRoutes.get("/account/:identifier", getOtherUser);
 usersRoutes.put("/account/profile", authMiddleware, multer({ storage: fileStorage2, fileFilter }).single('photoUrl'), updateProfileByIdUser);
 
+// get post other user
+// usersRoutes.get("/account/:userId/posts", getPostOtherUser);
 module.exports = { usersRoutes };
