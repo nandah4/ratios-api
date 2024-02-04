@@ -151,6 +151,7 @@ async function registerController(req, res) {
         ],
       }));
     }
+ 
     if (confirmPassword !== password) {
       return res.status(400).send(
         badRequestMessage({
@@ -164,6 +165,20 @@ async function registerController(req, res) {
         })
       );
     }
+
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if(!usernameRegex.test(username)) {
+      return res.status(400).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "username",
+              message: "Username can only contain letters, numbers, underscores, and hyphens."
+            },
+          ],
+        }),
+      );
+    };
 
     const prisma = new PrismaClient();
 
@@ -286,24 +301,40 @@ const getUserByIdUser = async (req, res) => {
   }
 }
 
+function isValidUUID(uuid) {
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+  return uuidRegex.test(uuid);
+}
+
 // get other user profile
 const getOtherUser = async (req, res) => {
-  const { userId } = req.params;
-
+  const { identifier } = req.params;
   try {
-    const findUser = await prisma.user.findMany({
-      where: {
-        id: userId,
-        isDeleted: false
-      },
-    });
+    let findUser;
 
-    if(findUser.length === 0) {
+      if (isValidUUID(identifier)) {
+        findUser = await prisma.user.findMany({
+          where: {
+            id: identifier,
+            isDeleted: false,
+          },
+        });
+      } else  {
+        findUser = await prisma.user.findMany({
+          where: {
+            username: identifier,
+            isDeleted: false,
+          },
+        });
+      };
+    
+
+    if (findUser.length === 0) {
       return res.status(404).send(badRequestMessage({
         messages: [
           {
-            field: "userId",
-            message: "User not found",
+            field: isValidUUID(identifier)? " " : "username or userId",
+            message: isValidUUID(identifier)? "User not found" : "user with the specified username not found",
           },
         ],
       }));
@@ -312,6 +343,13 @@ const getOtherUser = async (req, res) => {
     return res.status(200).send(successMessageWithData(findUser));
   } catch (error) {
     console.log(error);
+    return res.status(500).send(badRequestMessage({
+      messages: [
+        {
+          message: "internal server error"
+        }
+      ]
+    }))
   };
 };
 
@@ -340,7 +378,6 @@ const updateProfileByIdUser = async (req, res) => {
       });
     }
 
-
     if (error.length !== 0) {
       return res.status(400).send(badRequestMessage({
         messages: [
@@ -348,6 +385,18 @@ const updateProfileByIdUser = async (req, res) => {
         ]
       }))
     }
+
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if(!usernameRegex.test(username)) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          {
+            field: "username",
+            message: "Username can only contain letters, numbers, underscores, and hyphens."
+          },
+        ],
+      }));
+    };
     // const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
 
     const existingUser = await prisma.user.findUnique({
