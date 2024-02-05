@@ -72,7 +72,66 @@ const createComentarById = async (req, res) => {
 };
 
 // UPDATE COMENTAR BY USER ID DAN ID COMENT
+const updateComentarByUserId = async (req, res) => {
+    const parseToken = verifyJwt(req.headers?.authorization);
+    const { comentarId } = req.params;
 
+    try {
+        const findComentar = await prisma.comentar.findFirst({
+            where: {
+                id: comentarId,
+                userId: parseToken.userId,
+                isDeleted: false
+            },
+        });
+
+        if (!findComentar) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "comentarId",
+                        message: "Comentar not found"
+                    },
+                ],
+            }));
+        };
+
+        const comentar = req.body?.comentar;
+        const error = [];
+        if (!comentar) {
+            error.push({
+                field: "comentar",
+                message: "comentar can`t be empty"
+            });
+        };
+
+        if (error.length !== 0) {
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    ...error
+                ],
+            }));
+        };
+
+        const updateComentar = await prisma.comentar.update({
+            where: {
+                id: comentarId,
+                userId: parseToken.userId,
+                isDeleted: false,
+            },
+            data: {
+                comentar: comentar || findComentar.comentar,
+            },
+            include: {
+                user: true
+            },
+        });
+
+        return res.status(200).send(successMessageWithData(updateComentar));
+    } catch (error) {
+        console.log(error);
+    };
+}
 
 // DELETE COMENTAR BY ID COMENTAR
 const deleteComentarById = async (req, res) => {
@@ -123,4 +182,4 @@ const deleteComentarById = async (req, res) => {
 };
 
 
-module.exports = { createComentarById, deleteComentarById };
+module.exports = { createComentarById, updateComentarByUserId, deleteComentarById };

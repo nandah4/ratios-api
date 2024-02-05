@@ -4,7 +4,7 @@ const photosRoutes = express.Router();
 const { getPhoto, getPhotoById, getPhotoByIdUser, createPhoto, updatePhotoById, deletePhotoById } = require('../controllers/photos.controllers');
 const { fileStorage, fileFilter } = require('../middlewares/photoMiddleware');
 const { authMiddleware } = require('../middlewares/authMiddleware');
-const { createComentarById, deleteComentarById } = require("../controllers/comentar.controllers")
+const { createComentarById, updateComentarByUserId, deleteComentarById } = require("../controllers/comentar.controllers")
 const { createLikeByIdUser, deleteLikeByIdUser } = require("../controllers/like.controllers");
 
 // ROUTES PHOTO
@@ -17,6 +17,7 @@ photosRoutes.put("/:photoId", authMiddleware, updatePhotoById);
 
 // ROUTES COMMENT
 photosRoutes.post("/:photoId/comentar", authMiddleware, createComentarById);
+photosRoutes.put("/:comentarId/update", authMiddleware, updateComentarByUserId)
 photosRoutes.delete("/:comentarId/comentar-delete", authMiddleware, deleteComentarById);
 
 // ROUTES LIKE

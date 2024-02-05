@@ -43,7 +43,7 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
     const album = await prisma.album.findFirst({
       where: {
         id: albumId,
-        userId: parseToken.userId,
+        // userId: parseToken.userId,
         isDeleted: false,
       },
       include: {
@@ -80,8 +80,6 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
       ],
     }));
   };
-
-
 };
 
 const createAlbumByUserIdController = async (req, res) => {

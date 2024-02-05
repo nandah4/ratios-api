@@ -151,6 +151,7 @@ async function registerController(req, res) {
         ],
       }));
     }
+
     if (confirmPassword !== password) {
       return res.status(400).send(
         badRequestMessage({
@@ -164,6 +165,20 @@ async function registerController(req, res) {
         })
       );
     }
+
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(username)) {
+      return res.status(400).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "username",
+              message: "Username can only contain letters, numbers, underscores, and hyphens."
+            },
+          ],
+        }),
+      );
+    };
 
     const prisma = new PrismaClient();
 
@@ -250,7 +265,7 @@ async function registerController(req, res) {
   }
 }
 
-// get userByIdUser
+// get my profile
 const getUserByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
@@ -264,7 +279,6 @@ const getUserByIdUser = async (req, res) => {
 
     if (!getUser) {
       return res.status(404).send(badRequestMessage({
-        error: "User not found",
         messages: [
           {
             field: "username",
@@ -287,6 +301,83 @@ const getUserByIdUser = async (req, res) => {
   }
 }
 
+function isValidUUID(uuid) {
+  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+  return uuidRegex.test(uuid);
+}
+
+// get other user profile 
+const getOtherUser = async (req, res) => {
+  const { identifier } = req.params;
+  try {
+    let findUser;
+
+    if (isValidUUID(identifier)) {
+      findUser = await prisma.user.findMany({
+        where: {
+          id: identifier,
+          isDeleted: false,
+        },
+        include: {
+          photos: {
+            where: {
+              isDeleted: false
+            },
+          },
+          albums: {
+            where: {
+              isDeleted: false
+            }
+          }
+        },
+      });
+    } else {
+      findUser = await prisma.user.findMany({
+        where: {
+          username: identifier,
+          isDeleted: false,
+        },
+
+        include: {
+          photos: {
+            where: {
+              isDeleted: false
+            },
+          },
+          albums: {
+            where: {
+              isDeleted: false
+            }
+          }
+        },
+      });
+    };
+
+
+    if (findUser.length === 0) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: isValidUUID(identifier) ? " " : "username or userId",
+            message: isValidUUID(identifier) ? "User not found" : "user with the specified username not found",
+          },
+        ],
+      }));
+    };
+
+    return res.status(200).send(successMessageWithData(findUser));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send(badRequestMessage({
+      messages: [
+        {
+          message: "internal server error"
+        }
+      ]
+    }))
+  };
+};
+
 // update profile by iduser
 const updateProfileByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -298,28 +389,39 @@ const updateProfileByIdUser = async (req, res) => {
     const username = req.body?.username;
     const photoUrl = req.file?.filename
 
-  const error = [];
-  if(!fullName) {
-    error.push({
-      field: "fullname",
-      message: "Full Name is required when update the profile",
-    })
-  }
-  if(!address) {
-    error.push({
-      field: "address",
-      message: "Address is required when update the profile",
-    });
-  }
-  
+    const error = [];
+    if (!fullName) {
+      error.push({
+        field: "fullname",
+        message: "Full Name is required when update the profile",
+      })
+    }
+    if (!address) {
+      error.push({
+        field: "address",
+        message: "Address is required when update the profile",
+      });
+    }
 
-  if(error.length !== 0) {
-    return res.status(400).send(badRequestMessage({
-      messages: [
-        ...error
-      ]
-    }))
-  }
+    if (error.length !== 0) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          ...error
+        ]
+      }))
+    }
+
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(username)) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          {
+            field: "username",
+            message: "Username can only contain letters, numbers, underscores, and hyphens."
+          },
+        ],
+      }));
+    };
     // const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
 
     const existingUser = await prisma.user.findUnique({
@@ -392,7 +494,6 @@ const updateProfileByIdUser = async (req, res) => {
     }));
   };
 };
-
 
 // login admin
 const loginAdminController = async (req, res) => {
@@ -475,4 +576,48 @@ const loginAdminController = async (req, res) => {
   }
 }
 
-module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, updateProfileByIdUser };
+
+// get post photo other user detail with userId
+// const getPostOtherUser = async (req, res) => {
+//   const { userId } = req.params;
+
+//   try {
+//     const getUser = await prisma.user.findFirst({
+//       where: {
+//         id: userId,
+//         isDeleted: false
+//       },
+//       include: {
+//         photos: {
+//           where: {
+//             userId: userId,
+//             isDeleted: false
+//           },
+//         },
+//         albums: {
+//           where: {
+//             userId: userId,
+//             isDeleted: false
+//           },
+//         },
+//       },
+//     });
+
+//     if(!getUser || getUser.length === 0) {
+//       return res.status(404).send(badRequestMessage({
+//         messages: [
+//           {
+//             field: "userId",
+//             message: "user not found",
+//           },
+//         ],
+//       }));
+//     };
+
+//     return res.status(200).send(successMessageWithData(getUser))
+//   } catch (error) {
+//     console.log(error);
+//   }
+
+// }
+module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, getOtherUser, updateProfileByIdUser };
