@@ -337,7 +337,7 @@ const getOtherUser = async (req, res) => {
           username: identifier,
           isDeleted: false,
         },
-        
+
         include: {
           photos: {
             where: {
