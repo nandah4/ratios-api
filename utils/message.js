@@ -1,7 +1,7 @@
 const badRequestMessage = ({ messages, error }) => {
   return {
     status: 400,
-    messages: "Bad Request",
+    message: "Bad Request",
     errors: {
       error,
       messages: messages,
