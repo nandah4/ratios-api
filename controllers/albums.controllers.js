@@ -14,21 +14,8 @@ const getAlbumsByUserIdController = async (req, res) => {
       userId: parseToken.userId,
       isDeleted: false,
     },
-    include: {
-      user: true
-    }
+    include: { photos: true },
   });
-
-  if (albums.length === 0) {
-    return res.status(200).send(successMessageWithData({
-      messages: [
-        {
-          field: "id",
-          message: "You haven't created any albums yet. Create an album to organize your photos!"
-        },
-      ],
-    }));
-  };
 
   return res.status(200).send(successMessageWithData(albums));
 };
@@ -52,34 +39,38 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
             isDeleted: false,
           },
           include: {
-            user: true
-          }
-        }
-      }
+            user: true,
+          },
+        },
+      },
     });
 
     if (!album) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId or userId",
-            message: "album not found"
-          },
-        ],
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId or userId",
+              message: "album not found",
+            },
+          ],
+        })
+      );
+    }
 
     return res.send(successMessageWithData(album));
   } catch (error) {
     console.log(error);
-    return res.status(500).send(badRequestMessage({
-      messages: [
-        {
-          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-        },
-      ],
-    }));
-  };
+    return res.status(500).send(
+      badRequestMessage({
+        messages: [
+          {
+            message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+          },
+        ],
+      })
+    );
+  }
 };
 
 const createAlbumByUserIdController = async (req, res) => {
@@ -94,23 +85,23 @@ const createAlbumByUserIdController = async (req, res) => {
     if (!title) {
       error.push({
         field: "title",
-        message: "Title is required"
+        message: "Title is required",
       });
-    };
+    }
 
     if (!description) {
       error.push({
         field: "description",
         message: "Description is required",
       });
-    };
+    }
 
     if (error.length !== 0) {
-      return res.status(400).send(badRequestMessage({
-        messages: [
-          ...error
-        ]
-      }))
+      return res.status(400).send(
+        badRequestMessage({
+          messages: [...error],
+        })
+      );
     }
 
     const newAlbum = await prisma.album.create({
@@ -121,7 +112,7 @@ const createAlbumByUserIdController = async (req, res) => {
       },
       include: {
         user: true,
-      }
+      },
     });
 
     return res.send(successMessageWithData(newAlbum));
@@ -129,11 +120,11 @@ const createAlbumByUserIdController = async (req, res) => {
     return res.status(500).send({
       messages: [
         {
-          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
         },
       ],
     });
-  };
+  }
 };
 
 const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
@@ -160,15 +151,17 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
     });
 
     if (!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId or userId",
-            message: "Album not found"
-          },
-        ],
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId or userId",
+              message: "Album not found",
+            },
+          ],
+        })
+      );
+    }
 
     // if (!findAlbum || !findAlbum.userId !== parseToken.userId) {
     //   return res.status(400).send(badRequestMessage({
@@ -187,21 +180,23 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
       },
       data: dataUpdate,
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
 
     return res.status(200).send(successMessageWithData(updateAlbum));
   } catch (error) {
     console.log(error);
-    return res.status(500).send(badRequestMessage({
-      messages: [
-        {
-          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-        },
-      ],
-    }));
-  };
+    return res.status(500).send(
+      badRequestMessage({
+        messages: [
+          {
+            message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+          },
+        ],
+      })
+    );
+  }
 };
 
 const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
@@ -218,16 +213,18 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
       },
     });
 
-    if(!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId or userId",
-            message: "Album not found or you don't have permission to delete this album.",
-          },
-        ],
-      }));
-    };
+    if (!findAlbum) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId or userId",
+              message: "Album not found or you don't have permission to delete this album.",
+            },
+          ],
+        })
+      );
+    }
 
     await prisma.photo.updateMany({
       where: {
@@ -236,7 +233,7 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
       data: {
         albumId: null,
       },
-    })
+    });
 
     await prisma.photo.updateMany({
       where: {
@@ -244,18 +241,17 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
         userId: parseToken.userId,
       },
       data: {
-        albumId: null
+        albumId: null,
       },
-    })
+    });
 
     await prisma.album.update({
       where: {
-        id: albumId
+        id: albumId,
       },
       data: {
         isDeleted: true,
       },
-
     });
     // if (!deleteAlbum) {
     //   return res.status(404).send(badRequestMessage({
@@ -271,11 +267,13 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
     return res.status(200).send(successMessageWithData());
   } catch (error) {
     console.log(error);
-    return res.send(badRequestMessage({
-      messages: {
-        message: "Internal server error"
-      }
-    }))
+    return res.send(
+      badRequestMessage({
+        messages: {
+          message: "Internal server error",
+        },
+      })
+    );
   }
 };
 
@@ -292,62 +290,67 @@ const addPhotoToAlbum = async (req, res) => {
       where: {
         id: albumId,
         userId: parseToken.userId,
-        isDeleted: false
+        isDeleted: false,
       },
       include: {
         photos: {
           include: {
             user: true,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     if (!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: {
-          field: "albumId or userId",
-          message: "Album not found"
-        },
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: {
+            field: "albumId or userId",
+            message: "Album not found",
+          },
+        })
+      );
+    }
 
     const findPhoto = await prisma.photo.findFirst({
       where: {
         id: photoId,
         userId: parseToken.userId,
-        isDeleted: false
+        isDeleted: false,
       },
     });
-    
+
     if (!findPhoto) {
-      return res.status(404).send(badRequestMessage({
-        messages: {
-          field: "photoId or userId",
-          message: "Foto not found"
-        },
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: {
+            field: "photoId or userId",
+            message: "Foto not found",
+          },
+        })
+      );
+    }
 
     await prisma.photo.update({
       where: {
-        id: photoId
+        id: photoId,
       },
       data: {
         albumId: albumId,
       },
     });
 
-    return res.status(200).send(successMessageWithData(findAlbum))
-
+    return res.status(200).send(successMessageWithData(findAlbum));
   } catch (error) {
     console.log(error);
-    return res.status(500).send(badRequestMessage({
-      messages: {
-        message: "Internal server error"
-      }
-    }))
-  };
+    return res.status(500).send(
+      badRequestMessage({
+        messages: {
+          message: "Internal server error",
+        },
+      })
+    );
+  }
 };
 
 // DELETE PHOTO FROM ALBUM
@@ -368,36 +371,37 @@ const deletePhotoFromAlbum = async (req, res) => {
       where: {
         id: photoId,
         userId: parseToken.userId,
-      }
+      },
     });
 
     if (!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: {
-          message: "Album not found"
-        },
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: {
+            message: "Album not found",
+          },
+        })
+      );
+    }
 
     if (!findPhoto) {
       return res.status(404).send({
         messages: {
-          message: "Photo not found"
-        }
+          message: "Photo not found",
+        },
       });
-    };
+    }
 
     const deletePhoto = await prisma.photo.update({
       where: {
-        id: photoId
+        id: photoId,
       },
       data: {
-        albumId: null
+        albumId: null,
       },
     });
 
     return res.status(200).send(successMessageWithData());
-
   } catch (error) {
     console.log(error);
     return res.status(500).send({
@@ -405,7 +409,7 @@ const deletePhotoFromAlbum = async (req, res) => {
         message: "Internal Server Error",
       },
     });
-  };
+  }
 };
 
 module.exports = {

@@ -7,10 +7,13 @@ const signJwt = (userId) => {
 };
 
 const verifyJwt = (token) => {
-  if (!token) return new Error("token required");
+  if (!token.includes("Bearer")) return false;
+
   const tokenParse = token.split(" ");
-  const parse = jwt.verify(tokenParse[1], SECRET_KEY_JWT);
-  return parse;
+  if (tokenParse[1] != null) {
+    const parse = jwt.verify(tokenParse[1], SECRET_KEY_JWT);
+    return parse;
+  }
 };
 
 module.exports = { signJwt, verifyJwt };
