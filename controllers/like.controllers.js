@@ -4,14 +4,12 @@ const { verifyJwt } = require("../utils/jwt");
 
 const prisma = new PrismaClient();
 
-
 const createLikeByIdUser = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
 
-    try {
-        // validasi find photo 
-        const existingPhoto = await prisma.photo.findUnique({
+    try { 
+        const existingPhoto = await prisma.photo.findFirst({
             where: {
                 id: photoId,
                 isDeleted: false
@@ -60,7 +58,6 @@ const createLikeByIdUser = async (req, res) => {
         });
 
         return res.status(200).send(successMessageWithData(createLike));
-
     } catch (error) {
         console.log(error);
         return res.send(badRequestMessage({
@@ -79,7 +76,6 @@ const deleteLikeByIdUser = async (req, res) => {
     const { photoId } = req.params;
 
     try {
-        // validasi find photo
         const findPhoto = await prisma.photo.findUnique({
             where: {
                 id: photoId,
@@ -114,6 +110,17 @@ const deleteLikeByIdUser = async (req, res) => {
                         message: "Oops! It seems like you haven't liked this photo yet. Give it a thumbs up and spread the love!"
                     },
                 ]
+            }));
+        };
+
+        if(existingLike.userId !== parseToken.userId) {
+            return res.status(400).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "userId and photoId",
+                        message:  "You don't have permission to delete this like",
+                    },
+                ],
             }));
         };
 

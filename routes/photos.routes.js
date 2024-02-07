@@ -8,9 +8,9 @@ const { createComentarById, updateComentarByUserId, deleteComentarById } = requi
 const { createLikeByIdUser, deleteLikeByIdUser } = require("../controllers/like.controllers");
 
 // ROUTES PHOTO
-photosRoutes.get("/", getPhoto); // all photo
-photosRoutes.get("/user", authMiddleware, getPhotoByIdUser); // by id user
-photosRoutes.get("/:photoId", getPhotoById); // by id photo
+photosRoutes.get("/users/:userId", authMiddleware, getPhotoByIdUser); // by id user
+photosRoutes.get("/:photoId", authMiddleware, getPhotoById); // by id photo
+photosRoutes.get("/", authMiddleware, getPhoto); // all photo
 photosRoutes.post("/", authMiddleware, multer({ storage: fileStorage, fileFilter }).single('locationFile'), createPhoto);
 photosRoutes.delete("/:photoId", authMiddleware, deletePhotoById);
 photosRoutes.put("/:photoId", authMiddleware, updatePhotoById);
@@ -18,7 +18,7 @@ photosRoutes.put("/:photoId", authMiddleware, updatePhotoById);
 // ROUTES COMMENT
 photosRoutes.post("/:photoId/comentar", authMiddleware, createComentarById);
 photosRoutes.put("/:comentarId/update", authMiddleware, updateComentarByUserId)
-photosRoutes.delete("/:comentarId/comentar-delete", authMiddleware, deleteComentarById);
+photosRoutes.delete("/:comentarId/comentar", authMiddleware, deleteComentarById);
 
 // ROUTES LIKE
 photosRoutes.post("/:photoId/like", authMiddleware, createLikeByIdUser);

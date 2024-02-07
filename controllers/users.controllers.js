@@ -6,7 +6,7 @@ const { ENV_PORT } = require('../environtment')
 
 const prisma = new PrismaClient()
 
-// login controllers
+// USER - login controllers
 async function loginController(req, res) {
   try {
     const email = req.body?.email;
@@ -95,7 +95,7 @@ async function loginController(req, res) {
   }
 }
 
-// register controllers
+// USER/GUEST - register controllers
 async function registerController(req, res) {
   try {
     const username = req.body?.username;
@@ -152,20 +152,6 @@ async function registerController(req, res) {
       }));
     }
 
-    if (confirmPassword !== password) {
-      return res.status(400).send(
-        badRequestMessage({
-          error: "Confirm Your Password",
-          messages: [
-            {
-              field: "Password",
-              message: "Password and confirmation do not match.",
-            },
-          ],
-        })
-      );
-    }
-
     const usernameRegex = /^[a-zA-Z0-9_-]+$/;
     if (!usernameRegex.test(username)) {
       return res.status(400).send(
@@ -179,6 +165,19 @@ async function registerController(req, res) {
         }),
       );
     };
+
+    if (confirmPassword !== password) {
+      return res.status(400).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "Password and confirmation password",
+              message: "Password and confirmation do not match.",
+            },
+          ],
+        })
+      );
+    }
 
     const prisma = new PrismaClient();
 
@@ -265,7 +264,7 @@ async function registerController(req, res) {
   }
 }
 
-// get my profile
+// USER - get user profile
 const getUserByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
@@ -306,7 +305,7 @@ function isValidUUID(uuid) {
   return uuidRegex.test(uuid);
 }
 
-// get other user profile 
+// USER - get other user profile 
 const getOtherUser = async (req, res) => {
   const { identifier } = req.params;
   try {
@@ -378,12 +377,11 @@ const getOtherUser = async (req, res) => {
   };
 };
 
-// update profile by iduser
+// USER - update profile by userID
 const updateProfileByIdUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
   try {
-
     const fullName = req.body?.fullName;
     const address = req.body?.address;
     const username = req.body?.username;
@@ -422,7 +420,6 @@ const updateProfileByIdUser = async (req, res) => {
         ],
       }));
     };
-    // const fileNameOnly = photoUrl.replace(/^uploads[\\\/]profiles[\\\/]/, `http://localhost:${ENV_PORT}/files/images/profiles/`);
 
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -430,22 +427,6 @@ const updateProfileByIdUser = async (req, res) => {
         isDeleted: false
       },
     });
-
-    // Validasi batas update username 7 hari
-    const lastUsernameUpdate = existingUser.updatedAt || 0;
-    const sevenDaysInMiliSecond = 7 * 24 * 60 * 60 * 1000;
-    const canUpdateUsername = Date.now() - lastUsernameUpdate > sevenDaysInMiliSecond;
-
-    if (username && !canUpdateUsername) {
-      return res.status(400).send(badRequestMessage({
-        messages: [
-          {
-            field: "username",
-            message: "You can only change your username once every 7 days."
-          },
-        ],
-      }));
-    };
 
     // validasi agar tidak ada kesamaan dengan user lain
     if (username && username !== existingUser.username) {
@@ -458,7 +439,7 @@ const updateProfileByIdUser = async (req, res) => {
         },
       });
 
-      if (!isUsernameTaken) {
+      if (isUsernameTaken) {
         return res.status(400).send(badRequestMessage({
           messages: [
             {
@@ -470,6 +451,24 @@ const updateProfileByIdUser = async (req, res) => {
       }
     };
 
+    // Validasi batas update username 7 hari
+    if (username && username !== existingUser.username) {
+      const lastUsernameUpdate = existingUser.updatedAt || 0;
+      const sevenDaysInMiliSecond = 7 * 24 * 60 * 60 * 1000;
+      const canUpdateUsername = Date.now() - lastUsernameUpdate > sevenDaysInMiliSecond;
+
+      if (!canUpdateUsername) {
+        return res.status(400).send(badRequestMessage({
+          messages: [
+            {
+              field: "username",
+              message: "You can only change your username once every 7 days."
+            },
+          ],
+        }));
+      };
+    };
+
     const updateProfileUser = await prisma.user.update({
       where: {
         id: parseToken.userId,
@@ -477,7 +476,7 @@ const updateProfileByIdUser = async (req, res) => {
       data: {
         fullName,
         address,
-        username: canUpdateUsername ? username : existingUser.username,
+        username: username || existingUser.username,
         photoUrl: photoUrl,
       },
     });
@@ -495,7 +494,7 @@ const updateProfileByIdUser = async (req, res) => {
   };
 };
 
-// login admin
+// ADMIN - login admin
 const loginAdminController = async (req, res) => {
   const email = req.body?.email;
   const password = req.body?.password;

@@ -21,7 +21,7 @@ usersRoutes.post("/auth/register", registerController);
 
 // profile user
 usersRoutes.get("/account", authMiddleware, getUserByIdUser);
-usersRoutes.get("/account/:identifier", getOtherUser);
+usersRoutes.get("/account/:identifier", authMiddleware, getOtherUser);
 usersRoutes.put("/account/profile", authMiddleware, multer({ storage: fileStorage2, fileFilter }).single('photoUrl'), updateProfileByIdUser);
 
 // get post other user

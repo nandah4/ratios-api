@@ -80,7 +80,6 @@ const updateComentarByUserId = async (req, res) => {
         const findComentar = await prisma.comentar.findFirst({
             where: {
                 id: comentarId,
-                userId: parseToken.userId,
                 isDeleted: false
             },
         });
@@ -95,6 +94,17 @@ const updateComentarByUserId = async (req, res) => {
                 ],
             }));
         };
+
+        if(findComentar.userId !== parseToken.userId) {
+            return res.status(403).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "userId",
+                        message: "You don`t have permission to update this foto",
+                    }
+                ]
+            }))
+        }
 
         const comentar = req.body?.comentar;
         const error = [];
@@ -139,7 +149,7 @@ const deleteComentarById = async (req, res) => {
     const { comentarId } = req.params;
 
     try {
-        const findComentar = await prisma.comentar.findUnique({
+        const findComentar = await prisma.comentar.findFirst({
             where: {
                 id: comentarId,
                 isDeleted: false
@@ -157,6 +167,17 @@ const deleteComentarById = async (req, res) => {
             }));
         };
 
+        if(findComentar.userId !== parseToken.userId){
+            return res.status(403).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "userId",
+                        message: "You don`t have permission to delete this comentar",
+                    },
+                ],
+            }));
+        };
+
         const deleteComentar = await prisma.comentar.update({
             where: {
                 id: comentarId,
@@ -167,7 +188,18 @@ const deleteComentarById = async (req, res) => {
             },
         });
 
-        return res.status(200).send(successMessageWithData());
+        if(!deleteComentar) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "comentarId",
+                        message: "Comentar not found"
+                    },
+                ],
+            }));
+        };
+
+        return res.status(200).send(successMessageWithData(deleteComentar));
 
     } catch (error) {
         console.log(error)

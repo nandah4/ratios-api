@@ -44,6 +44,54 @@ const getPhoto = async (req, res) => {
     };
 };
 
+// GET PHOTO BY ID USER
+const getPhotoByIdUser = async (req, res) => {
+    const parseToken = verifyJwt(req.headers?.authorization);
+    const {userId} = req.params;
+
+    try {
+        const findUser = await prisma.user.findFirst({
+            where: {
+                id: userId,
+                isDeleted: false,
+            },
+        });
+
+        if(!findUser) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "userId",
+                        message: "User not found"
+                    }
+                ]
+            }))
+        }
+        
+        // Get All Foto User Id
+        const getPhoto = await prisma.photo.findMany({
+            where: {
+                userId: userId,
+                isDeleted: false
+            },
+            include: {
+                user: true
+            },
+        });
+        return res.status(200).send(successMessageWithData(getPhoto));
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+                },
+            ],
+        }));
+    };
+};
+
 // GET PHOTO BY ID PHOTO
 const getPhotoById = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
@@ -96,35 +144,6 @@ const getPhotoById = async (req, res) => {
     };
 };
 
-// GET PHOTO BY ID USER
-const getPhotoByIdUser = async (req, res) => {
-    const parseToken = verifyJwt(req.headers?.authorization);
-
-    try {
-        // Get All Foto User Id
-        const getPhoto = await prisma.photo.findMany({
-            where: {
-                userId: parseToken.userId,
-                isDeleted: false
-            },
-            include: {
-                user: true
-            },
-        });
-        return res.status(200).send(successMessageWithData(getPhoto));
-
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send(badRequestMessage({
-            messages: [
-                {
-                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-                },
-            ],
-        }));
-    };
-};
-
 // CREATE PHOTO
 const createPhoto = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
@@ -151,7 +170,7 @@ const createPhoto = async (req, res) => {
         if (!locationFile) {
             error.push({
                 field: "locationFile",
-                message: "It looks empty here! Start by uploading your favorite photos to fill this space with memories."
+                message: "File upload is required and Only JPG, JPEG and PNG files are allowed."
             });
         }
 
@@ -296,14 +315,26 @@ const deletePhotoById = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
     try {
+        
         const photoToDelete = await prisma.photo.findFirst({
             where: {
                 id: photoId,
-                userId: parseToken.userId
+                isDeleted: false,
             },
         });
 
-        if (!photoToDelete || photoToDelete.userId !== parseToken.userId) {
+        if(!photoToDelete) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "photoId",
+                        message: "photo not found"
+                    }
+                ]
+            }))
+        }
+
+        if ( photoToDelete.userId !== parseToken.userId) {
             return res.status(403).send(badRequestMessage({
                 messages: [
                     {
@@ -340,13 +371,18 @@ const deletePhotoById = async (req, res) => {
             },
         });
 
-        return res.status(200).send(successMessageWithData({
-            messages: [
-                {
-                    message: "Photo deletion complete! Your memories are now a bit lighter."
-                },
-            ]
-        }));
+        if(!deletePhoto) {
+            return res.status(404).send(badRequestMessage({
+                messages: [
+                    {
+                        field: "photoId",
+                        message: "Photo not found",
+                    },
+                ],
+            }));
+        };
+
+        return res.status(200).send(successMessageWithData());
     } catch (error) {
         console.log(error)
         return res.status(500).send(badRequestMessage({
