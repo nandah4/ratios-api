@@ -449,14 +449,14 @@ const deletePhotoFromAlbum = async (req, res) => {
     });
 
     if (!findPhoto) {
-      return res.status(404).send({
+      return res.status(404).send(badRequestMessage({
         messages: [
           {
             field: "photoId",
             message: "photo not found",
           },
         ],
-      });
+      }));
     }
 
     if(findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {

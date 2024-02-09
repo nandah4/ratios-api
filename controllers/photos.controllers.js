@@ -368,6 +368,7 @@ const deletePhotoById = async (req, res) => {
             },
             data: {
                 isDeleted: true,
+                albumId: null
             },
         });
 
@@ -382,7 +383,7 @@ const deletePhotoById = async (req, res) => {
             }));
         };
 
-        return res.status(200).send(successMessageWithData());
+        return res.status(200).send(successMessageWithData(deletePhoto));
     } catch (error) {
         console.log(error)
         return res.status(500).send(badRequestMessage({

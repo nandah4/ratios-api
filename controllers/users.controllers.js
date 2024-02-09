@@ -327,7 +327,7 @@ const getOtherUser = async (req, res) => {
             where: {
               isDeleted: false
             }
-          }
+          },
         },
       });
     } else {
@@ -347,7 +347,7 @@ const getOtherUser = async (req, res) => {
             where: {
               isDeleted: false
             }
-          }
+          },
         },
       });
     };
