@@ -7,12 +7,26 @@ const signJwt = (userId) => {
 };
 
 const verifyJwt = (token) => {
-  if (!token.includes("Bearer")) return false;
+
+  if (!token || typeof token !== 'string') {
+    return false;
+  };
+
+  if (!token.includes("Bearer")) {
+    return false;
+  }
 
   const tokenParse = token.split(" ");
-  if (tokenParse[1] != null) {
+  if (tokenParse.length !== 2 || !tokenParse[1]){
+    return false;
+  }
+
+  try {
     const parse = jwt.verify(tokenParse[1], SECRET_KEY_JWT);
     return parse;
+  } catch (error) {
+    console.log("Error verifying JWT");
+    return false;
   }
 };
 

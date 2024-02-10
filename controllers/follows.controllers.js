@@ -1,7 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const { badRequestMessage, successMessageWithData } = require('../utils/message');
 const { verifyJwt } = require('../utils/jwt');
-const { usersRoutes } = require('../routes/users.routes');
 
 const prisma = new PrismaClient();
 

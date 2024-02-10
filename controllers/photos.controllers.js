@@ -9,6 +9,7 @@ const prisma = new PrismaClient();
 
 // GET ALL PHOTO
 const getPhoto = async (req, res) => {
+    const parseToken = verifyJwt(req.headers?.authorization);
     const { title } = req.query;
 
     try {

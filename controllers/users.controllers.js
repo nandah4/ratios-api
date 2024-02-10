@@ -575,48 +575,4 @@ const loginAdminController = async (req, res) => {
   }
 }
 
-
-// get post photo other user detail with userId
-// const getPostOtherUser = async (req, res) => {
-//   const { userId } = req.params;
-
-//   try {
-//     const getUser = await prisma.user.findFirst({
-//       where: {
-//         id: userId,
-//         isDeleted: false
-//       },
-//       include: {
-//         photos: {
-//           where: {
-//             userId: userId,
-//             isDeleted: false
-//           },
-//         },
-//         albums: {
-//           where: {
-//             userId: userId,
-//             isDeleted: false
-//           },
-//         },
-//       },
-//     });
-
-//     if(!getUser || getUser.length === 0) {
-//       return res.status(404).send(badRequestMessage({
-//         messages: [
-//           {
-//             field: "userId",
-//             message: "user not found",
-//           },
-//         ],
-//       }));
-//     };
-
-//     return res.status(200).send(successMessageWithData(getUser))
-//   } catch (error) {
-//     console.log(error);
-//   }
-
-// }
 module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, getOtherUser, updateProfileByIdUser };
