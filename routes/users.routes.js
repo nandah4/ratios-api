@@ -6,13 +6,14 @@ const { loginController,
     getUserByIdUser,
     updateProfileByIdUser,
     getOtherUser,
+    getAlbumsByUserIdController
 } = require("../controllers/users.controllers");
 const {
     getFollowersController,
     followUsersController,
     getFollowingController,
     unfollowControllers,
-    deleteFollowersController
+    deleteFollowersController,
 } = require("../controllers/follows.controllers");
 const multer = require('multer');
 const { fileStorage2, fileFilter } = require('../middlewares/photoMiddleware');
@@ -30,6 +31,9 @@ usersRoutes.post("/auth/register", registerController);
 usersRoutes.get("/account", authMiddleware, getUserByIdUser);
 usersRoutes.get("/account/:identifier", authMiddleware, getOtherUser);
 usersRoutes.put("/account/profile", authMiddleware, multer({ storage: fileStorage2, fileFilter }).single('photoUrl'), updateProfileByIdUser);
+
+// user album
+usersRoutes.get("/:userId/albums", authMiddleware, getAlbumsByUserIdController); 
 
 // following follower
 usersRoutes.get("/account/:userId/followers", authMiddleware, getFollowersController);

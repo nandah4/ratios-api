@@ -43,6 +43,16 @@ const getFollowersController = async (req, res) => {
                 where: {
                     id: follower.followerId
                 },
+                select: {
+                    id: true,
+                    username: true,
+                    fullName: true,
+                    email: true,
+                    address: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    role: true
+                }
             });
             userData.followerId = follower.followerId;
             followersData.push(userData);
@@ -51,6 +61,7 @@ const getFollowersController = async (req, res) => {
         return res.status(200).send(successMessageWithData(followersData));
 
     } catch (error) {
+        console.log(error)
         return res.status(500).send(badRequestMessage({
             messages: [
                 {
@@ -100,6 +111,16 @@ const getFollowingController = async (req, res) => {
                 where: {
                     id: follow.followingId,
                 },
+                select: {
+                    id: true,
+                    username: true,
+                    fullName: true,
+                    email: true,
+                    address: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    role: true
+                }
             });
             userData.followingId = follow.followingId;
             followingData.push(userData)

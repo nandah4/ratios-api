@@ -1,7 +1,6 @@
 const express = require("express");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const {
-  getAlbumsByUserIdController,
   createAlbumByUserIdController,
   getAlbumByAlbumIdAndUserIdController,
   updateAlbumByUserIdController,
@@ -13,7 +12,6 @@ const {
 const albumRoutes = express.Router();
 
 albumRoutes.get("/:albumId", authMiddleware, getAlbumByAlbumIdAndUserIdController);
-albumRoutes.get("/users/:userId", authMiddleware, getAlbumsByUserIdController); 
 albumRoutes.post("/", authMiddleware, createAlbumByUserIdController);
 albumRoutes.post("/:albumId/photos/:photoId", authMiddleware, addPhotoToAlbum);
 albumRoutes.put("/:albumId", authMiddleware, updateAlbumByUserIdController);

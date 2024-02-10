@@ -31,7 +31,14 @@ const getPhoto = async (req, res) => {
             };
 
         const photos = await prisma.photo.findMany(searchQuery);
-        return res.status(200).send(successMessageWithData(photos));
+
+        const photosHideUserPassword = photos.map(photo => {
+            const userWithoutPassword = { ...photo.user };
+            delete userWithoutPassword.password;
+            return { ...photo, user: userWithoutPassword };
+        })
+
+        return res.status(200).send(successMessageWithData(photosHideUserPassword));
 
     } catch (error) {
         console.log(error);
@@ -48,7 +55,7 @@ const getPhoto = async (req, res) => {
 // GET PHOTO BY ID USER
 const getPhotoByIdUser = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
-    const {userId} = req.params;
+    const { userId } = req.params;
 
     try {
         const findUser = await prisma.user.findFirst({
@@ -58,7 +65,7 @@ const getPhotoByIdUser = async (req, res) => {
             },
         });
 
-        if(!findUser) {
+        if (!findUser) {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {
@@ -68,7 +75,7 @@ const getPhotoByIdUser = async (req, res) => {
                 ]
             }))
         }
-        
+
         // Get All Foto User Id
         const getPhoto = await prisma.photo.findMany({
             where: {
@@ -79,7 +86,14 @@ const getPhotoByIdUser = async (req, res) => {
                 user: true
             },
         });
-        return res.status(200).send(successMessageWithData(getPhoto));
+
+        const photoWithoutPassword = getPhoto.map(photo => {
+            const userWithoutPassword = { ...photo.user };
+            delete userWithoutPassword.password;
+            return { ...photo, user: userWithoutPassword }
+        });
+
+        return res.status(200).send(successMessageWithData(photoWithoutPassword));
 
     } catch (error) {
         console.log(error)
@@ -133,8 +147,29 @@ const getPhotoById = async (req, res) => {
             }));
         };
 
-        return res.status(200).send(successMessageWithData(photo));
+        //photos
+        const userWithoutPassword = { ...photo.user };
+        delete userWithoutPassword.password;
+        const photosHideUserPassword = { ...photo, user: userWithoutPassword };
+        //comentar
+        const comentarUserWithoutPassword = photosHideUserPassword.comentars.map(comentar => {
+            const hidePasswordComentar = { ...comentar.user };
+            delete hidePasswordComentar.password;
+            return { ...comentar, user: hidePasswordComentar };
+        });
+        const photoHidePasswordComentar = { ...photosHideUserPassword, comentars: comentarUserWithoutPassword }
+        //like
+        const likeUserWithoutPassword = photoHidePasswordComentar.likes.map(like => {
+            const hidePasswordLike = { ...like.user };
+            delete hidePasswordLike.password;
+            return { ...like, user: hidePasswordLike };
+        })
+
+        const photoHidePasswordLike = { ...photoHidePasswordComentar, likes: likeUserWithoutPassword }
+
+        return res.status(200).send(successMessageWithData(photoHidePasswordLike));
     } catch (error) {
+        console.log(error)
         return res.status(500).send(badRequestMessage({
             messages: [
                 {
@@ -206,7 +241,12 @@ const createPhoto = async (req, res) => {
             },
         });
 
-        return res.status(200).send(successMessageWithData(newPhoto));
+        const hideUserPassword = { ...newPhoto.user };
+        delete hideUserPassword.password;
+
+        const photoWithoutPassword = { ...newPhoto, user: hideUserPassword };
+
+        return res.status(200).send(successMessageWithData(photoWithoutPassword));
         //         message: "Hooray! Your photo has been uploaded successfully. Celebrate the moment!"
 
     } catch (error) {
@@ -298,7 +338,11 @@ const updatePhotoById = async (req, res) => {
             }
         });
 
-        return res.status(200).send(successMessageWithData(updatePhoto));
+        const hidePasswordUser = { ...updatePhoto.user };
+        delete hidePasswordUser.password;
+        const photoWithoutPassword = {...updatePhoto, user: hidePasswordUser};
+
+        return res.status(200).send(successMessageWithData(photoWithoutPassword));
 
     } catch (error) {
         return res.status(500).send(badRequestMessage({
@@ -316,7 +360,7 @@ const deletePhotoById = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
     try {
-        
+
         const photoToDelete = await prisma.photo.findFirst({
             where: {
                 id: photoId,
@@ -324,7 +368,7 @@ const deletePhotoById = async (req, res) => {
             },
         });
 
-        if(!photoToDelete) {
+        if (!photoToDelete) {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {
@@ -335,7 +379,7 @@ const deletePhotoById = async (req, res) => {
             }))
         }
 
-        if ( photoToDelete.userId !== parseToken.userId) {
+        if (photoToDelete.userId !== parseToken.userId) {
             return res.status(403).send(badRequestMessage({
                 messages: [
                     {
@@ -373,7 +417,7 @@ const deletePhotoById = async (req, res) => {
             },
         });
 
-        if(!deletePhoto) {
+        if (!deletePhoto) {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {

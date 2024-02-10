@@ -57,7 +57,11 @@ const createLikeByIdUser = async (req, res) => {
             }
         });
 
-        return res.status(200).send(successMessageWithData(createLike));
+        const hidePasswordUser = {...createLike.user};
+        delete hidePasswordUser.password;
+        const photoHidePasswordLike = {...createLike, user: hidePasswordUser};
+
+        return res.status(200).send(successMessageWithData(photoHidePasswordLike));
     } catch (error) {
         console.log(error);
         return res.send(badRequestMessage({

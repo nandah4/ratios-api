@@ -54,17 +54,6 @@ async function loginController(req, res) {
       }));
     };
 
-    // if (!user.password) {
-    //   return res.send(badRequestMessage({
-    //     error: "Password not entered",
-    //     messages: [
-    //       {
-    //         message: "Password not set. Please set a password for your account to ensure security."
-    //       },
-    //     ],
-    //   }))
-    // };
-
     const isPasswordValid = await matchPassword(password, user.password)
     if (!isPasswordValid) {
       return res.status(400).send(badRequestMessage({
@@ -77,11 +66,23 @@ async function loginController(req, res) {
       })
       );
     };
-    const jwt = signJwt(user.id);
+    const dataLogin = {
+      user: {
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        email: user.email,
+        address: user.address,
+        photoUrl: user.photoUrl,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        role: user.role,
+      },
+      token: signJwt(user.id)
+    };
 
-    return res.status(200).send(successMessageWithData({
-      token: jwt,
-    }));
+
+    return res.status(200).send(successMessageWithData(dataLogin));
 
   } catch (error) {
     console.log(error);
@@ -254,8 +255,12 @@ async function registerController(req, res) {
       },
     });
 
-    return res.status(200).send(successMessageWithData(newUser));
+    const newUserPassword = { ...newUser };
+    delete newUserPassword.password;
+
+    return res.status(200).send(successMessageWithData(newUserPassword));
   } catch (error) {
+    console.log(error);
     return res.status(500).send(badRequestMessage({
       messages: {
         message: "Internal server error"
@@ -287,7 +292,12 @@ const getUserByIdUser = async (req, res) => {
       }));
     };
 
-    return res.send(successMessageWithData(getUser));
+    const getUserWithoutPw = getUser.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+
+    return res.send(successMessageWithData(getUserWithoutPw));
   } catch (error) {
     console.log(error)
     return res.status(500).send(badRequestMessage({
@@ -352,6 +362,10 @@ const getOtherUser = async (req, res) => {
       });
     };
 
+    findUser = findUser.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
 
     if (findUser.length === 0) {
       return res.status(404).send(badRequestMessage({
@@ -409,18 +423,6 @@ const updateProfileByIdUser = async (req, res) => {
       }))
     }
 
-    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-    if (!usernameRegex.test(username)) {
-      return res.status(400).send(badRequestMessage({
-        messages: [
-          {
-            field: "username",
-            message: "Username can only contain letters, numbers, underscores, and hyphens."
-          },
-        ],
-      }));
-    };
-
     const existingUser = await prisma.user.findUnique({
       where: {
         id: parseToken.userId,
@@ -428,8 +430,48 @@ const updateProfileByIdUser = async (req, res) => {
       },
     });
 
-    // validasi agar tidak ada kesamaan dengan user lain
-    if (username && username !== existingUser.username) {
+    // Validasi batas update username 7 hari
+    if (!username || username === existingUser.username) {
+      const updateProfileUser = await prisma.user.update({
+        where: {
+          id: parseToken.userId,
+        },
+        data: {
+          fullName,
+          address,
+          username: existingUser.username,
+          photoUrl: photoUrl,
+        },
+      });
+    } else {
+
+      const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+      if (!usernameRegex.test(username)) {
+        return res.status(400).send(badRequestMessage({
+          messages: [
+            {
+              field: "username",
+              message: "Username can only contain letters, numbers, underscores, and hyphens."
+            },
+          ],
+        }));
+      };
+
+      const lastUsernameUpdate = existingUser.updatedAt || 0;
+      const sevenDaysInMiliSecond = 7 * 24 * 60 * 60 * 1000;
+      const canUpdateUsername = Date.now() - lastUsernameUpdate > sevenDaysInMiliSecond;
+
+      if (!canUpdateUsername) {
+        return res.status(400).send(badRequestMessage({
+          messages: [
+            {
+              field: "username",
+              message: "You can only change your username once every 7 days."
+            },
+          ],
+        }));
+      };
+
       const isUsernameTaken = await prisma.user.findFirst({
         where: {
           username: username,
@@ -449,41 +491,36 @@ const updateProfileByIdUser = async (req, res) => {
           ],
         }));
       }
-    };
 
-    // Validasi batas update username 7 hari
-    if (username && username !== existingUser.username) {
-      const lastUsernameUpdate = existingUser.updatedAt || 0;
-      const sevenDaysInMiliSecond = 7 * 24 * 60 * 60 * 1000;
-      const canUpdateUsername = Date.now() - lastUsernameUpdate > sevenDaysInMiliSecond;
+      const updateProfileUser = await prisma.user.update({
+        where: {
+          id: parseToken.userId,
+        },
+        data: {
+          fullName,
+          address,
+          username: username,
+          photoUrl: photoUrl,
+          updatedAt: new Date(),
+        },
+      });
+    }
 
-      if (!canUpdateUsername) {
-        return res.status(400).send(badRequestMessage({
-          messages: [
-            {
-              field: "username",
-              message: "You can only change your username once every 7 days."
-            },
-          ],
-        }));
-      };
-    };
-
-    const updateProfileUser = await prisma.user.update({
+    const getUserUpdate = await prisma.user.findMany({
       where: {
         id: parseToken.userId,
-      },
-      data: {
-        fullName,
-        address,
-        username: username || existingUser.username,
-        photoUrl: photoUrl,
-      },
+      }
+    })
+
+    const hidePassword = getUserUpdate.map(user => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
     });
 
-    return res.status(200).send(successMessageWithData(updateProfileUser));
+    return res.status(200).send(successMessageWithData(hidePassword));
 
   } catch (error) {
+    console.log(error)
     return res.status(500).send(badRequestMessage({
       messages: [
         {
@@ -492,6 +529,67 @@ const updateProfileByIdUser = async (req, res) => {
       ],
     }));
   };
+};
+
+// USER ALBUM :
+const getAlbumsByUserIdController = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const { userId } = req.params;
+
+  const prisma = new PrismaClient();
+
+  try {
+    const findUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+    });
+
+    if (!findUser) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId",
+            message: "User not found"
+          },
+        ],
+      }));
+    };
+
+    const album = await prisma.album.findMany({
+      where: {
+        userId: userId,
+        isDeleted: false
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            address: true,
+            createdAt: true,
+            updatedAt: true,
+            role: true
+          }
+        }
+      },
+    });
+
+    return res.status(200).send(successMessageWithData(album));
+  } catch (error) {
+    return res.status(500).send(badRequestMessage({
+      messages: [
+        {
+          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
+
+        },
+      ],
+    }));
+  };
+
 };
 
 // ADMIN - login admin
@@ -564,15 +662,25 @@ const loginAdminController = async (req, res) => {
       }));
     };
 
-    const jwt = signJwt(findAdmin.id);
-
-    return res.status(200).send(successMessageWithData({
-      token: jwt
-    }));
+    const dataLoginAdmin = {
+      user: {
+        id: findAdmin.id,
+        username: findAdmin.username,
+        fullName: findAdmin.fullName,
+        email: findAdmin.email,
+        address: findAdmin.address,
+        photoUrl: findAdmin.photoUrl,
+        createdAt: findAdmin.createdAt,
+        updatedAt: findAdmin.updatedAt,
+        role: findAdmin.role,
+      },
+      token : signJwt(findAdmin.id),
+    }
+    return res.status(200).send(successMessageWithData(dataLoginAdmin));
 
   } catch (error) {
     console.log(error);
   }
 }
 
-module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, getOtherUser, updateProfileByIdUser };
+module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, getOtherUser, updateProfileByIdUser, getAlbumsByUserIdController };

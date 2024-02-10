@@ -3,55 +3,6 @@ const { verifyJwt } = require("../utils/jwt");
 const { successMessageWithData, successCreateMessageWithData, badRequestMessage } = require("../utils/message");
 const { parse } = require("dotenv");
 
-// GET ALBUM BY USER ID
-const getAlbumsByUserIdController = async (req, res) => {
-  const parseToken = verifyJwt(req.headers?.authorization);
-  const { userId } = req.params;
-
-  const prisma = new PrismaClient();
-
-  try {
-    const findUser = await prisma.user.findFirst({
-      where: {
-        id: userId,
-        isDeleted: false,
-      },
-    });
-
-    if (!findUser) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "userId",
-            message: "User not found"
-          },
-        ],
-      }));
-    };
-
-    const album = await prisma.album.findMany({
-      where: {
-        userId: userId,
-        isDeleted: false
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    return res.status(200).send(successMessageWithData(album));
-  } catch (error) {
-    return res.status(500).send(badRequestMessage({
-      messages: [
-        {
-          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-
-        },
-      ],
-    }));
-  };
-
-};
 
 // GET DETAIL ALBUM
 const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
@@ -89,7 +40,18 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
             isDeleted: false,
           },
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+                fullName: true,
+                email: true,
+                address: true,
+                createdAt: true,
+                updatedAt: true,
+                role: true
+              }
+            }
           },
         },
       },
@@ -108,7 +70,16 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
       );
     }
 
-    return res.send(successMessageWithData(album));
+    // const hideUserPasswordPhotoAlbum = album.map(photo => {
+    //   const photoWithoutPassword = photo.photos.map(photo => {
+    //     const userWithoutPassword = {...photo.user};
+    //     delete userWithoutPassword.password;
+    //     return {...photo, user: userWithoutPassword};
+    //   })
+    //   return {...photo, user: photoWithoutPassword};
+    // })
+
+    return res.status(200).send(successMessageWithData(album));
   } catch (error) {
     console.log(error);
     return res.status(500).send(
@@ -165,7 +136,11 @@ const createAlbumByUserIdController = async (req, res) => {
       },
     });
 
-    return res.send(successMessageWithData(newAlbum));
+    const hideUserPasswordPhotoAlbum = { ...newAlbum.user };
+    delete hideUserPasswordPhotoAlbum.password;
+    const hidePassword = { ...newAlbum, user: hideUserPasswordPhotoAlbum }
+
+    return res.send(successMessageWithData(hidePassword));
   } catch (error) {
     return res.status(500).send({
       messages: [
@@ -242,7 +217,18 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
         description: description,
       },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            address: true,
+            createdAt: true,
+            updatedAt: true,
+            role: true
+          }
+        }
       },
     });
 
@@ -286,7 +272,7 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
       }));
     };
 
-    if(findAlbum.userId !== parseToken.userId) {
+    if (findAlbum.userId !== parseToken.userId) {
       return res.status(403).send(badRequestMessage({
         messages: [
           {
@@ -381,7 +367,7 @@ const addPhotoToAlbum = async (req, res) => {
       }));
     };
 
-    if( findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
+    if (findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
       return res.status(403).send(badRequestMessage({
         messages: [
           {
@@ -416,7 +402,7 @@ const addPhotoToAlbum = async (req, res) => {
 };
 
 // DELETE PHOTO FROM ALBUM
-const deletePhotoFromAlbum = async (req, res) => {  
+const deletePhotoFromAlbum = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
   const prisma = new PrismaClient();
   const { albumId, photoId } = req.params;
@@ -430,7 +416,7 @@ const deletePhotoFromAlbum = async (req, res) => {
       },
     });
 
-    if(!findAlbum) {
+    if (!findAlbum) {
       return res.status(404).send(badRequestMessage({
         messages: [
           {
@@ -459,7 +445,7 @@ const deletePhotoFromAlbum = async (req, res) => {
       }));
     }
 
-    if(findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
+    if (findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
       return res.status(403).send(badRequestMessage({
         messages: [
           {
@@ -495,7 +481,6 @@ const deletePhotoFromAlbum = async (req, res) => {
 };
 
 module.exports = {
-  getAlbumsByUserIdController,
   createAlbumByUserIdController,
   getAlbumByAlbumIdAndUserIdController,
   updateAlbumByUserIdController: updateAlbumByAlbumIdAndUserIdController,

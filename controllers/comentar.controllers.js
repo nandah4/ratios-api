@@ -52,13 +52,11 @@ const createComentarById = async (req, res) => {
             }
         });
 
-        return res.status(200).send(successMessageWithData(createdComentar));
-        // return res.send(successMessageWithData({
-        //     messages: {
-        //         message: "Comment successfully created!",
-        //         additionalInfo: "Your thoughts have been shared. Thanks for contributing!"
-        //     },
-        // }));
+        const hidePasswordComentar = { ...createdComentar.user };
+        delete hidePasswordComentar.password;
+        const comentarUserWithoutPassword = { ...createdComentar, user: hidePasswordComentar };
+
+        return res.status(200).send(successMessageWithData(comentarUserWithoutPassword));
 
     } catch (error) {
         return res.status(500).send(badRequestMessage({
@@ -95,7 +93,7 @@ const updateComentarByUserId = async (req, res) => {
             }));
         };
 
-        if(findComentar.userId !== parseToken.userId) {
+        if (findComentar.userId !== parseToken.userId) {
             return res.status(403).send(badRequestMessage({
                 messages: [
                     {
@@ -137,9 +135,20 @@ const updateComentarByUserId = async (req, res) => {
             },
         });
 
-        return res.status(200).send(successMessageWithData(updateComentar));
+        const hidePasswordComentar = {...updateComentar.user};
+        delete hidePasswordComentar.password;
+        const photoHidePasswordComentar = {...updateComentar, user: hidePasswordComentar}
+
+        return res.status(200).send(successMessageWithData(photoHidePasswordComentar));
     } catch (error) {
         console.log(error);
+        return res.status(500).send(badRequestMessage({
+            messages: [
+                {
+                    message: "internal server error"
+                }
+            ]
+        }))
     };
 }
 
@@ -167,7 +176,7 @@ const deleteComentarById = async (req, res) => {
             }));
         };
 
-        if(findComentar.userId !== parseToken.userId){
+        if (findComentar.userId !== parseToken.userId) {
             return res.status(403).send(badRequestMessage({
                 messages: [
                     {
@@ -183,12 +192,9 @@ const deleteComentarById = async (req, res) => {
                 id: comentarId,
                 userId: parseToken.userId
             },
-            data: {
-                isDeleted: true,
-            },
         });
 
-        if(!deleteComentar) {
+        if (!deleteComentar) {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {
