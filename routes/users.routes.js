@@ -39,7 +39,7 @@ usersRoutes.get("/:userId/albums", authMiddleware, getAlbumsByUserIdController);
 usersRoutes.get("/:userId/followers", authMiddleware, getFollowersController);
 usersRoutes.get("/:userId/following", authMiddleware, getFollowingController);
 usersRoutes.post("/:userId/follow", authMiddleware, followUsersController);
-usersRoutes.delete(":userId/unfollow", authMiddleware, unfollowControllers);
+usersRoutes.delete("/:userId/unfollow", authMiddleware, unfollowControllers);
 usersRoutes.delete("/followers/:followerId", authMiddleware, deleteFollowersController);
 // get post other user
 // usersRoutes.get("/account/:userId/posts", getPostOtherUser);

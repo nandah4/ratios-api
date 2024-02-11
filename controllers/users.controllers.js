@@ -569,6 +569,7 @@ const getAlbumsByUserIdController = async (req, res) => {
             username: true,
             fullName: true,
             email: true,
+            photoUrl: true,
             address: true,
             createdAt: true,
             updatedAt: true,
