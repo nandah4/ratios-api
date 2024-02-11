@@ -36,11 +36,11 @@ usersRoutes.put("/account/profile", authMiddleware, multer({ storage: fileStorag
 usersRoutes.get("/:userId/albums", authMiddleware, getAlbumsByUserIdController); 
 
 // following follower
-usersRoutes.get("/account/:userId/followers", authMiddleware, getFollowersController);
-usersRoutes.get("/account/:userId/following", authMiddleware, getFollowingController);
-usersRoutes.post("/account/:userId/follow", authMiddleware, followUsersController);
-usersRoutes.delete("/account/:userId/unfollow", authMiddleware, unfollowControllers);
-usersRoutes.delete("/account/followers/:followerId", authMiddleware, deleteFollowersController);
+usersRoutes.get("/:userId/followers", authMiddleware, getFollowersController);
+usersRoutes.get("/:userId/following", authMiddleware, getFollowingController);
+usersRoutes.post("/:userId/follow", authMiddleware, followUsersController);
+usersRoutes.delete(":userId/unfollow", authMiddleware, unfollowControllers);
+usersRoutes.delete("/followers/:followerId", authMiddleware, deleteFollowersController);
 // get post other user
 // usersRoutes.get("/account/:userId/posts", getPostOtherUser);
 module.exports = { usersRoutes };

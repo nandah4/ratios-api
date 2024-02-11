@@ -5,7 +5,7 @@ const { getPhoto, getPhotoById, getPhotoByIdUser, createPhoto, updatePhotoById, 
 const { fileStorage, fileFilter } = require('../middlewares/photoMiddleware');
 const { authMiddleware } = require('../middlewares/authMiddleware');
 const { createComentarById, updateComentarByUserId, deleteComentarById } = require("../controllers/comentar.controllers")
-const { createLikeByIdUser, deleteLikeByIdUser } = require("../controllers/like.controllers");
+const { createLikeByIdUser } = require("../controllers/like.controllers");
 
 // ROUTES PHOTO
 photosRoutes.get("/users/:userId", authMiddleware, getPhotoByIdUser); // by id user
@@ -22,6 +22,6 @@ photosRoutes.delete("/:comentarId/comentar", authMiddleware, deleteComentarById)
 
 // ROUTES LIKE
 photosRoutes.post("/:photoId/like", authMiddleware, createLikeByIdUser);
-photosRoutes.delete("/:photoId/like", authMiddleware, deleteLikeByIdUser);
+// photosRoutes.delete("/:photoId/like", authMiddleware, deleteLikeByIdUser);
 
 module.exports = { photosRoutes };

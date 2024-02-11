@@ -8,7 +8,7 @@ const createLikeByIdUser = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
     const { photoId } = req.params;
 
-    try { 
+    try {
         const existingPhoto = await prisma.photo.findFirst({
             where: {
                 id: photoId,
@@ -36,14 +36,16 @@ const createLikeByIdUser = async (req, res) => {
         });
 
         if (existingLike) {
-            return res.status(400).send(badRequestMessage({
-                messages: [
-                    {
-                        field: "photoId and userId",
-                        message: "Oops! You've already liked this photo."
-                    },
-                ],
-            }));
+            const deleteLike = await prisma.like.delete({
+                where: {
+                    userId_photoId: {
+                        userId: parseToken.userId,
+                        photoId: photoId
+                    }
+                }
+            });
+
+            return res.status(200).send(successMessageWithData())
         };
 
         // create like
@@ -57,9 +59,9 @@ const createLikeByIdUser = async (req, res) => {
             }
         });
 
-        const hidePasswordUser = {...createLike.user};
+        const hidePasswordUser = { ...createLike.user };
         delete hidePasswordUser.password;
-        const photoHidePasswordLike = {...createLike, user: hidePasswordUser};
+        const photoHidePasswordLike = { ...createLike, user: hidePasswordUser };
 
         return res.status(200).send(successMessageWithData(photoHidePasswordLike));
     } catch (error) {
@@ -74,79 +76,4 @@ const createLikeByIdUser = async (req, res) => {
     };
 };
 
-// DELETE LIKE
-const deleteLikeByIdUser = async (req, res) => {
-    const parseToken = verifyJwt(req.headers?.authorization);
-    const { photoId } = req.params;
-
-    try {
-        const findPhoto = await prisma.photo.findUnique({
-            where: {
-                id: photoId,
-                isDeleted: false
-            }
-        });
-
-        if (!findPhoto) {
-            return res.status(404).send(badRequestMessage({
-                messages: [
-                    {
-                        field: "photoId",
-                        message: "Photo not found",
-                    },
-                ],
-            }));
-        };
-
-        // cek apakah user sudah like atau belum
-        const existingLike = await prisma.like.findFirst({
-            where: {
-                userId: parseToken.userId,
-                photoId: photoId
-            },
-        });
-
-        if (!existingLike) {
-            return res.status(400).send(badRequestMessage({
-                messages: [
-                    {
-                        field: "photoId and userId",
-                        message: "Oops! It seems like you haven't liked this photo yet. Give it a thumbs up and spread the love!"
-                    },
-                ]
-            }));
-        };
-
-        if(existingLike.userId !== parseToken.userId) {
-            return res.status(400).send(badRequestMessage({
-                messages: [
-                    {
-                        field: "userId and photoId",
-                        message:  "You don't have permission to delete this like",
-                    },
-                ],
-            }));
-        };
-
-        await prisma.like.delete({
-            where: {
-                userId_photoId: {
-                    userId: parseToken.userId,
-                    photoId: photoId
-                }
-            },
-        });
-
-        return res.status(200).send(successMessageWithData());
-    } catch (error) {
-        return res.status(500).send(badRequestMessage({
-            messages: [
-                {
-                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-                },
-            ]
-        }));
-    };
-};
-
-module.exports = { createLikeByIdUser, deleteLikeByIdUser }
+module.exports = { createLikeByIdUser }
