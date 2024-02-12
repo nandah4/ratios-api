@@ -28,12 +28,12 @@ usersRoutes.post("/auth/login", loginController);
 usersRoutes.post("/auth/register", registerController);
 
 // profile user
-usersRoutes.get("/account", authMiddleware, getUserByIdUser);
-usersRoutes.get("/account/:identifier", authMiddleware, getOtherUser);
-usersRoutes.put("/account/profile", authMiddleware, multer({ storage: fileStorage2, fileFilter }).single('photoUrl'), updateProfileByIdUser);
+usersRoutes.get("/", authMiddleware, getUserByIdUser);
+usersRoutes.get("/:identifier", authMiddleware, getOtherUser);
+usersRoutes.put("/profile", authMiddleware, multer({ storage: fileStorage2, fileFilter }).single('photoUrl'), updateProfileByIdUser);
 
 // user album
-usersRoutes.get("/:userId/albums", authMiddleware, getAlbumsByUserIdController); 
+usersRoutes.get("/:userId/albums", authMiddleware, getAlbumsByUserIdController);
 
 // following follower
 usersRoutes.get("/:userId/followers", authMiddleware, getFollowersController);

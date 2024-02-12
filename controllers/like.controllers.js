@@ -45,7 +45,9 @@ const createLikeByIdUser = async (req, res) => {
                 }
             });
 
-            return res.status(200).send(successMessageWithData())
+            const response = {...deleteLike, isLiked: false}
+
+            return res.status(200).send(successMessageWithData(response))
         };
 
         // create like
@@ -54,16 +56,11 @@ const createLikeByIdUser = async (req, res) => {
                 userId: parseToken.userId,
                 photoId: photoId,
             },
-            include: {
-                user: true
-            }
         });
 
-        const hidePasswordUser = { ...createLike.user };
-        delete hidePasswordUser.password;
-        const photoHidePasswordLike = { ...createLike, user: hidePasswordUser };
+        const response = {...createLike, isLiked: true}
 
-        return res.status(200).send(successMessageWithData(photoHidePasswordLike));
+        return res.status(200).send(successMessageWithData(response));
     } catch (error) {
         console.log(error);
         return res.send(badRequestMessage({

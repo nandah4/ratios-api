@@ -34,7 +34,16 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
         id: albumId,
         isDeleted: false,
       },
-      include: {
+      include: {  
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            photoUrl: true,
+          },
+        },
         photos: {
           where: {
             isDeleted: false,
@@ -47,10 +56,6 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
                 fullName: true,
                 email: true,
                 photoUrl: true,
-                address: true,
-                createdAt: true,
-                updatedAt: true,
-                role: true
               }
             }
           },
@@ -111,13 +116,6 @@ const createAlbumByUserIdController = async (req, res) => {
       });
     }
 
-    if (!description) {
-      error.push({
-        field: "description",
-        message: "Description is required",
-      });
-    }
-
     if (error.length !== 0) {
       return res.status(400).send(
         badRequestMessage({
@@ -139,6 +137,7 @@ const createAlbumByUserIdController = async (req, res) => {
 
     const hideUserPasswordPhotoAlbum = { ...newAlbum.user };
     delete hideUserPasswordPhotoAlbum.password;
+    delete hideUserPasswordPhotoAlbum.role;
     const hidePassword = { ...newAlbum, user: hideUserPasswordPhotoAlbum }
 
     return res.send(successMessageWithData(hidePassword));

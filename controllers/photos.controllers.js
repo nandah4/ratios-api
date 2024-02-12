@@ -150,11 +150,19 @@ const getPhotoById = async (req, res) => {
         //photos
         const userWithoutPassword = { ...photo.user };
         delete userWithoutPassword.password;
+        delete userWithoutPassword.role;
+        delete userWithoutPassword.address;
+        delete userWithoutPassword.createdAt;
+        delete userWithoutPassword.updatedAt;
         const photosHideUserPassword = { ...photo, user: userWithoutPassword };
         //comentar
         const comentarUserWithoutPassword = photosHideUserPassword.comentars.map(comentar => {
             const hidePasswordComentar = { ...comentar.user };
             delete hidePasswordComentar.password;
+            delete hidePasswordComentar.role;
+            delete hidePasswordComentar.address;
+            delete hidePasswordComentar.createdAt;
+            delete hidePasswordComentar.updatedAt;
             return { ...comentar, user: hidePasswordComentar };
         });
         const photoHidePasswordComentar = { ...photosHideUserPassword, comentars: comentarUserWithoutPassword }
@@ -162,12 +170,20 @@ const getPhotoById = async (req, res) => {
         const likeUserWithoutPassword = photoHidePasswordComentar.likes.map(like => {
             const hidePasswordLike = { ...like.user };
             delete hidePasswordLike.password;
+            delete hidePasswordLike.role;
+            delete hidePasswordLike.address;
+            delete hidePasswordLike.createdAt;
+            delete hidePasswordLike.updatedAt;
             return { ...like, user: hidePasswordLike };
         })
 
         const photoHidePasswordLike = { ...photoHidePasswordComentar, likes: likeUserWithoutPassword }
 
-        return res.status(200).send(successMessageWithData(photoHidePasswordLike));
+        const userHasLiked = photoHidePasswordLike.likes.some(like => like.userId === parseToken.userId);
+
+        const photoWithIsLiked = { ...photoHidePasswordLike, isLiked: userHasLiked }
+
+        return res.status(200).send(successMessageWithData(photoWithIsLiked));
     } catch (error) {
         console.log(error)
         return res.status(500).send(badRequestMessage({
@@ -340,7 +356,7 @@ const updatePhotoById = async (req, res) => {
 
         const hidePasswordUser = { ...updatePhoto.user };
         delete hidePasswordUser.password;
-        const photoWithoutPassword = {...updatePhoto, user: hidePasswordUser};
+        const photoWithoutPassword = { ...updatePhoto, user: hidePasswordUser };
 
         return res.status(200).send(successMessageWithData(photoWithoutPassword));
 
