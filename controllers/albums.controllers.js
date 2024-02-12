@@ -34,7 +34,16 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
         id: albumId,
         isDeleted: false,
       },
-      include: {
+      include: {  
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            photoUrl: true,
+          },
+        },
         photos: {
           where: {
             isDeleted: false,
@@ -47,9 +56,6 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
                 fullName: true,
                 email: true,
                 photoUrl: true,
-                address: true,
-                createdAt: true,
-                updatedAt: true,
               }
             }
           },
@@ -109,7 +115,7 @@ const createAlbumByUserIdController = async (req, res) => {
         message: "Title is required",
       });
     }
-    
+
     if (error.length !== 0) {
       return res.status(400).send(
         badRequestMessage({
