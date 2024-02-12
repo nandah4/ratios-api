@@ -1,9 +1,28 @@
 const midtrans = require("midtrans-client");
 const { MIDTRANS_SERVER_KEY } = require("../environtment");
-const { successMessageWithData } = require("../utils/message");
+const { successMessageWithData, authMessage } = require("../utils/message");
+const { verifyJwt } = require("../utils/jwt");
+const { PrismaClient } = require("@prisma/client");
+const { v4 } = require("uuid");
 
 const createDonation = async (req, res) => {
-  const { orderId } = req.body;
+  const amount = req.body?.amount;
+  const parseToken = verifyJwt(req.headers?.authorization);
+
+  if (!parseToken) {
+    return res.status(401).send(authMessage());
+  }
+
+  const prisma = new PrismaClient();
+
+  const uuid = v4();
+
+  const user = await prisma.user.findFirst({
+    where: {
+      id: parseToken.id,
+    },
+  });
+
   const snap = new midtrans.Snap({
     isProduction: false,
     serverKey: MIDTRANS_SERVER_KEY,
@@ -11,12 +30,16 @@ const createDonation = async (req, res) => {
 
   const payload = {
     transaction_details: {
-      order_id: orderId,
+      order_id: `DONATION-${uuid}`,
       gross_amount: 10000,
+    },
+    customer_details: {
+      email: user.email,
     },
   };
 
   const createTransaction = await snap.createTransaction(payload);
+
   return res.send(
     successMessageWithData({
       token: createTransaction?.token,
