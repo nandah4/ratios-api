@@ -563,6 +563,19 @@ const getAlbumsByUserIdController = async (req, res) => {
         isDeleted: false
       },
       include: {
+        photos: {
+          where: {
+            isDeleted: false,
+          },
+          select: {
+            id: true,
+            userId: true,
+            title: true,
+            locationFile: true,
+            albumId: true,
+            isDeleted: true
+          }
+        },
         user: {
           select: {
             id: true,
@@ -575,12 +588,13 @@ const getAlbumsByUserIdController = async (req, res) => {
             updatedAt: true,
             role: true
           }
-        }
+        },
       },
     });
 
     return res.status(200).send(successMessageWithData(album));
   } catch (error) {
+    console.log(error)
     return res.status(500).send(badRequestMessage({
       messages: [
         {
