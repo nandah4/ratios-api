@@ -7,17 +7,16 @@ const signJwt = (userId) => {
 };
 
 const verifyJwt = (token) => {
-
-  if (!token || typeof token !== 'string') {
+  if (!token || typeof token !== "string") {
     return false;
-  };
+  }
 
   if (!token.includes("Bearer")) {
     return false;
   }
 
   const tokenParse = token.split(" ");
-  if (tokenParse.length !== 2 || !tokenParse[1]){
+  if (tokenParse.length !== 2 || !tokenParse[1]) {
     return false;
   }
 

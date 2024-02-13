@@ -3,7 +3,6 @@ const { verifyJwt } = require("../utils/jwt");
 const { successMessageWithData, successCreateMessageWithData, badRequestMessage } = require("../utils/message");
 const { parse } = require("dotenv");
 
-
 // GET DETAIL ALBUM
 const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -14,27 +13,29 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
     const existingAlbum = await prisma.album.findFirst({
       where: {
         id: albumId,
-        isDeleted: false
+        isDeleted: false,
       },
     });
 
     if (!existingAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId",
-            message: "Album not found"
-          },
-        ],
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId",
+              message: "Album not found",
+            },
+          ],
+        })
+      );
+    }
 
-    const album = await prisma.album.findMany({
+    const album = await prisma.album.findFirst({
       where: {
         id: albumId,
         isDeleted: false,
       },
-      include: {  
+      include: {
         user: {
           select: {
             id: true,
@@ -56,8 +57,8 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
                 fullName: true,
                 email: true,
                 photoUrl: true,
-              }
-            }
+              },
+            },
           },
         },
       },
@@ -138,7 +139,7 @@ const createAlbumByUserIdController = async (req, res) => {
     const hideUserPasswordPhotoAlbum = { ...newAlbum.user };
     delete hideUserPasswordPhotoAlbum.password;
     delete hideUserPasswordPhotoAlbum.role;
-    const hidePassword = { ...newAlbum, user: hideUserPasswordPhotoAlbum }
+    const hidePassword = { ...newAlbum, user: hideUserPasswordPhotoAlbum };
 
     return res.send(successMessageWithData(hidePassword));
   } catch (error) {
@@ -166,27 +167,30 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
     });
 
     if (!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId",
-            message: "Album not found"
-          },
-        ],
-      }));
-    };
-
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId",
+              message: "Album not found",
+            },
+          ],
+        })
+      );
+    }
 
     if (findAlbum.userId !== parseToken.userId) {
-      return res.status(400).send(badRequestMessage({
-        messages: [
-          {
-            field: "userId",
-            message: "You don`t have permission to update this album"
-          },
-        ],
-      }));
-    };
+      return res.status(400).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "You don`t have permission to update this album",
+            },
+          ],
+        })
+      );
+    }
 
     const title = req.body?.title;
     const description = req.body?.description;
@@ -197,15 +201,15 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
         field: "title",
         message: "title is required",
       });
-    };
+    }
 
     if (error.length !== 0) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          ...error
-        ],
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [...error],
+        })
+      );
+    }
 
     const updateAlbum = await prisma.album.update({
       where: {
@@ -227,9 +231,9 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
             address: true,
             createdAt: true,
             updatedAt: true,
-            role: true
-          }
-        }
+            role: true,
+          },
+        },
       },
     });
 
@@ -263,27 +267,30 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
     });
 
     if (!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId",
-            message: "Album not found",
-          },
-        ],
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId",
+              message: "Album not found",
+            },
+          ],
+        })
+      );
+    }
 
     if (findAlbum.userId !== parseToken.userId) {
-      return res.status(403).send(badRequestMessage({
-        messages: [
-          {
-            field: "userId",
-            message: "You don`t have permission to delete this album",
-          },
-        ],
-      }));
-    };
-
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "You don`t have permission to delete this album",
+            },
+          ],
+        })
+      );
+    }
 
     await prisma.photo.updateMany({
       where: {
@@ -305,15 +312,17 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
     });
 
     if (!album) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId",
-            message: "Album not found",
-          },
-        ],
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId",
+              message: "Album not found",
+            },
+          ],
+        })
+      );
+    }
 
     return res.status(200).send(successMessageWithData(album));
   } catch (error) {
@@ -339,45 +348,51 @@ const addPhotoToAlbum = async (req, res) => {
     const findAlbum = await prisma.album.findFirst({
       where: {
         id: albumId,
-        isDeleted: false
+        isDeleted: false,
       },
     });
 
     if (!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: {
-          field: "albumId",
-          message: "Album not found"
-        },
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: {
+            field: "albumId",
+            message: "Album not found",
+          },
+        })
+      );
+    }
 
     const findPhoto = await prisma.photo.findFirst({
       where: {
         id: photoId,
-        isDeleted: false
+        isDeleted: false,
       },
     });
 
     if (!findPhoto) {
-      return res.status(404).send(badRequestMessage({
-        messages: {
-          field: "photoId",
-          message: "Foto not found"
-        },
-      }));
-    };
+      return res.status(404).send(
+        badRequestMessage({
+          messages: {
+            field: "photoId",
+            message: "Foto not found",
+          },
+        })
+      );
+    }
 
     if (findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
-      return res.status(403).send(badRequestMessage({
-        messages: [
-          {
-            field: "userId",
-            message: "You don't have permission to add this photo to the album"
-          },
-        ],
-      }));
-    };
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "You don't have permission to add this photo to the album",
+            },
+          ],
+        })
+      );
+    }
 
     const addPhoto = await prisma.photo.update({
       where: {
@@ -389,7 +404,7 @@ const addPhotoToAlbum = async (req, res) => {
       },
     });
 
-    return res.status(200).send(successMessageWithData(addPhoto))
+    return res.status(200).send(successMessageWithData(addPhoto));
   } catch (error) {
     console.log(error);
     return res.status(500).send(
@@ -409,7 +424,6 @@ const deletePhotoFromAlbum = async (req, res) => {
   const { albumId, photoId } = req.params;
 
   try {
-
     const findAlbum = await prisma.album.findFirst({
       where: {
         id: albumId,
@@ -418,43 +432,49 @@ const deletePhotoFromAlbum = async (req, res) => {
     });
 
     if (!findAlbum) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "albumId",
-            message: "Album not found",
-          }
-        ]
-      }))
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "albumId",
+              message: "Album not found",
+            },
+          ],
+        })
+      );
     }
 
     const findPhoto = await prisma.photo.findFirst({
       where: {
         id: photoId,
         isDeleted: false,
-      }
+      },
     });
 
     if (!findPhoto) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "photoId",
-            message: "photo not found",
-          },
-        ],
-      }));
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "photoId",
+              message: "photo not found",
+            },
+          ],
+        })
+      );
     }
 
     if (findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
-      return res.status(403).send(badRequestMessage({
-        messages: [
-          {
-            field: "userId",
-            message: "You don`t have permission to delete this foto from album",
-          }
-        ]
-      }))
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "You don`t have permission to delete this foto from album",
+            },
+          ],
+        })
+      );
     }
 
     const deletePhoto = await prisma.photo.update({
@@ -474,9 +494,9 @@ const deletePhotoFromAlbum = async (req, res) => {
     return res.status(500).send({
       messages: [
         {
-          message: "Internal server error"
-        }
-      ]
+          message: "Internal server error",
+        },
+      ],
     });
   }
 };

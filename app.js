@@ -13,6 +13,11 @@ const multer = require("multer");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
+app.use((req, res, next) => {
+  console.log(`${req.method} | ${req.url}`);
+  next();
+});
+
 app.get("/", (_, res) => {
   console.log(_.protocol);
   return res.send("Say Hi to 🙌 Ratio App Web Service");
@@ -26,4 +31,3 @@ app.use("/albums", albumRoutes);
 app.listen(ENV_PORT, () => {
   console.log(`ratio service listening on http://localhost:${ENV_PORT}`);
 });
-

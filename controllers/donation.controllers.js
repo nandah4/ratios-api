@@ -6,6 +6,7 @@ const { PrismaClient } = require("@prisma/client");
 const { v4 } = require("uuid");
 
 const createDonation = async (req, res) => {
+  const { photoId } = req.params;
   const amount = req.body?.amount;
   const parseToken = verifyJwt(req.headers?.authorization);
 
@@ -20,6 +21,12 @@ const createDonation = async (req, res) => {
   const user = await prisma.user.findFirst({
     where: {
       id: parseToken.id,
+    },
+  });
+
+  const photo = await prisma.photo.findFirst({
+    where: {
+      id: photoId,
     },
   });
 
