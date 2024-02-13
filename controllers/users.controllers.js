@@ -144,6 +144,14 @@ async function registerController(req, res) {
         message: "addrres can not be empty"
       });
     }
+    
+    const passwordRegex = /^.{8,}$/;
+    if(!passwordRegex.test(password)) {
+      error.push({
+        field: "password",
+        message: "Input password minimum 8 character"
+      });
+    }
 
     if (error.length !== 0) {
       return res.status(400).send(badRequestMessage({
