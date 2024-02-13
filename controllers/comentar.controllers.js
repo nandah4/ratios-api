@@ -192,6 +192,9 @@ const deleteComentarById = async (req, res) => {
                 id: comentarId,
                 userId: parseToken.userId
             },
+            data: {
+                isDeleted: true
+            }
         });
 
         if (!deleteComentar) {
