@@ -368,12 +368,12 @@ const addPhotoToAlbum = async (req, res) => {
       }));
     };
 
-    if (findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
+    if (findAlbum.userId !== parseToken.userId) {
       return res.status(403).send(badRequestMessage({
         messages: [
           {
             field: "userId",
-            message: "You don't have permission to add this photo to the album"
+            message: "You don't have permission to add this photo to the album" 
           },
         ],
       }));
@@ -382,7 +382,6 @@ const addPhotoToAlbum = async (req, res) => {
     const addPhoto = await prisma.photo.update({
       where: {
         id: photoId,
-        userId: parseToken.userId,
       },
       data: {
         albumId: albumId,

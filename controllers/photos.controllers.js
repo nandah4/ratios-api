@@ -10,31 +10,36 @@ const prisma = new PrismaClient();
 // GET ALL PHOTO
 const getPhoto = async (req, res) => {
     const parseToken = verifyJwt(req.headers?.authorization);
-    const { title } = req.query;
+    const { query } = req.query;
 
     try {
-        const searchQuery = title ? {
-            where: {
-                isDeleted: false,
-                title: {
-                    contains: title,
-                },
-            },
-        }
-            : {
+        let searchQuery =  {
                 where: {
-                    isDeleted: false
+                    isDeleted: false,
+                    OR: [
+                        {
+                            title: {
+                                contains: query
+                            },
+                        },
+                        {
+                            description: {
+                                contains: query
+                            },
+                            
+                        },
+                    ],
                 },
                 include: {
                     user: true
-                },
-            };
-
+                },    
+        }
         const photos = await prisma.photo.findMany(searchQuery);
 
         const photosHideUserPassword = photos.map(photo => {
             const userWithoutPassword = { ...photo.user };
             delete userWithoutPassword.password;
+            delete userWithoutPassword.role;
             return { ...photo, user: userWithoutPassword };
         })
 
