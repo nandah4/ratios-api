@@ -29,12 +29,12 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
       }));
     };
 
-    const album = await prisma.album.findMany({
+    const album = await prisma.album.findFirst({
       where: {
         id: albumId,
         isDeleted: false,
       },
-      include: {  
+      include: {
         user: {
           select: {
             id: true,
@@ -288,7 +288,6 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
     await prisma.photo.updateMany({
       where: {
         albumId: albumId,
-        userId: parseToken.userId,
       },
       data: {
         albumId: null,
@@ -298,6 +297,7 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
     const album = await prisma.album.update({
       where: {
         id: albumId,
+        userId: parseToken.userId
       },
       data: {
         isDeleted: true,
@@ -373,7 +373,7 @@ const addPhotoToAlbum = async (req, res) => {
         messages: [
           {
             field: "userId",
-            message: "You don't have permission to add this photo to the album" 
+            message: "You don't have permission to add this photo to the album"
           },
         ],
       }));
@@ -445,7 +445,7 @@ const deletePhotoFromAlbum = async (req, res) => {
       }));
     }
 
-    if (findAlbum.userId !== parseToken.userId || findPhoto.userId !== parseToken.userId) {
+    if (findAlbum.userId !== parseToken.userId) {
       return res.status(403).send(badRequestMessage({
         messages: [
           {
@@ -456,10 +456,15 @@ const deletePhotoFromAlbum = async (req, res) => {
       }))
     }
 
+    if (!findPhoto.albumId || findPhoto.albumId !== albumId) {
+      return res.status(200).send(successMessageWithData({
+        message: "Photo already removed from the album"
+      }));
+    }
+
     const deletePhoto = await prisma.photo.update({
       where: {
         id: photoId,
-        userId: parseToken.userId,
         albumId: albumId,
       },
       data: {
