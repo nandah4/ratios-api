@@ -54,8 +54,7 @@ model Photo {
     user         User       @relation(fields: [userId], references: [id])
     comentars    Comentar[]
     likes        Like[]
-    albumId      String?
-    album        Album?     @relation(fields: [albumId], references: [id])
+    albums        Album[]
 }
 
 model Album {
