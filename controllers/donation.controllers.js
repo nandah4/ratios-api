@@ -38,7 +38,7 @@ const createDonation = async (req, res) => {
   const payload = {
     transaction_details: {
       order_id: `DONATION-${uuid}`,
-      gross_amount: 10000,
+      gross_amount: amount,
     },
     customer_details: {
       email: user.email,

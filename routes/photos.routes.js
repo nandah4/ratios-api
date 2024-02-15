@@ -15,7 +15,7 @@ photosRoutes.get("/", authMiddleware, getPhoto); // all photo
 photosRoutes.post("/", authMiddleware, multer({ storage: fileStorage, fileFilter }).single("locationFile"), createPhoto);
 photosRoutes.delete("/:photoId", authMiddleware, deletePhotoById);
 photosRoutes.put("/:photoId", authMiddleware, updatePhotoById);
-photosRoutes.put("/:photoId/donation", authMiddleware, createDonation);
+photosRoutes.post("/:photoId/donation", authMiddleware, createDonation);
 
 // ROUTES COMMENT
 photosRoutes.post("/:photoId/comentar", authMiddleware, createComentarById);
