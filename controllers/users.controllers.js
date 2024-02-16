@@ -3,6 +3,7 @@ const { badRequestMessage, successMessageWithData } = require("../utils/message"
 const { signJwt, verifyJwt } = require("../utils/jwt");
 const { hashPassword, matchPassword } = require("../utils/password");
 const { ENV_PORT } = require("../environtment");
+const { text } = require("body-parser");
 
 const prisma = new PrismaClient();
 
@@ -592,34 +593,9 @@ const getAlbumsByUserIdController = async (req, res) => {
         isDeleted: false,
       },
       include: {
-        photos: {
-          where: {
-            isDeleted: false,
-          },
-          select: {
-            id: true,
-            userId: true,
-            title: true,
-            locationFile: true,
-            albumId: true,
-            isDeleted: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            username: true,
-            fullName: true,
-            email: true,
-            photoUrl: true,
-            address: true,
-            createdAt: true,
-            updatedAt: true,
-            role: true,
-          },
-        },
-      },
-    });
+        photos: true
+      }
+      });
 
     return res.status(200).send(successMessageWithData(album));
   } catch (error) {

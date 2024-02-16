@@ -508,17 +508,7 @@ const deletePhotoFromAlbum = async (req, res) => {
           ],
         })
       );
-    }
 
-    if(!findPhoto.albums.some(album => album.id === albumId)) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "photoId",
-            message: "Photo already removed from the album"
-          }
-        ]
-      }))
     }
 
     const deletePhoto = await prisma.album.update({
