@@ -35,7 +35,13 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
         id: albumId,
         isDeleted: false,
       },
-      include: {
+      select : {
+        id: true,
+        userId: true,
+        title: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,
@@ -49,7 +55,12 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
           where: {
             isDeleted: false,
           },
-          include: {
+          select: {
+            id: true,
+            userId: true,
+            title: true,
+            description: true,
+            locationFile: true,
             user: {
               select: {
                 id: true,
@@ -58,10 +69,10 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
                 email: true,
                 photoUrl: true,
               },
-            },
+          },
           },
         },
-      },
+      }
     });
 
     if (!album) {
@@ -132,17 +143,26 @@ const createAlbumByUserIdController = async (req, res) => {
         userId: parseToken.userId,
       },
       include: {
-        user: true,
-      },
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            photoUrl: true
+          }
+        }
+      }
     });
 
-    const hideUserPasswordPhotoAlbum = { ...newAlbum.user };
-    delete hideUserPasswordPhotoAlbum.password;
-    delete hideUserPasswordPhotoAlbum.role;
-    const hidePassword = { ...newAlbum, user: hideUserPasswordPhotoAlbum };
+    // const hideUserPasswordPhotoAlbum = { ...newAlbum.user };
+    // delete hideUserPasswordPhotoAlbum.password;
+    // delete hideUserPasswordPhotoAlbum.role;
+    // const hidePassword = { ...newAlbum, user: hideUserPasswordPhotoAlbum };
 
-    return res.send(successMessageWithData(hidePassword));
+    return res.send(successMessageWithData(newAlbum));
   } catch (error) {
+    console.log(error)
     return res.status(500).send({
       messages: [
         {
@@ -228,10 +248,6 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
             fullName: true,
             email: true,
             photoUrl: true,
-            address: true,
-            createdAt: true,
-            updatedAt: true,
-            role: true,
           },
         },
       },
@@ -292,14 +308,14 @@ const deleteAlbumByAlbumIdAndUserIdController = async (req, res) => {
       );
     }
 
-    await prisma.photo.updateMany({
-      where: {
-        albumId: albumId,
-      },
-      data: {
-        albumId: null,
-      },
-    });
+    // await prisma.photo.updateMany({
+    //   where: {
+    //     albumId: albumId,
+    //   },
+    //   data: {
+    //     albumId: null,
+    //   },
+    // });
 
     const album = await prisma.album.update({
       where: {
@@ -394,16 +410,34 @@ const addPhotoToAlbum = async (req, res) => {
       );
     }
 
-    const addPhoto = await prisma.photo.update({
+    const addPhotoToAlbum = await prisma.album.update({
+      where: {
+        id: albumId,
+      },
+      data: {
+        photos: {
+          connect: {
+            id: photoId
+          }
+        }
+      }
+    });
+
+  await prisma.photo.update({
       where: {
         id: photoId,
       },
       data: {
-        albumId: albumId,
-      },
+        albums: {
+          connect: {
+            id: albumId
+          }
+        }
+      }
     });
 
-    return res.status(200).send(successMessageWithData(addPhoto));
+    return res.status(200).send(successMessageWithData());
+
   } catch (error) {
     console.log(error);
     return res.status(500).send(
@@ -476,25 +510,30 @@ const deletePhotoFromAlbum = async (req, res) => {
       );
     }
 
-    if (!findPhoto.albumId || findPhoto.albumId !== albumId) {
-      return res.status(200).send(
-        successMessageWithData({
-          message: "Photo already removed from the album",
-        })
-      );
-    }
+    if(!findPhoto.albums.some(album => album.id === albumId) )
 
-    const deletePhoto = await prisma.photo.update({
-      where: {
-        id: photoId,
-        albumId: albumId,
-      },
-      data: {
-        albumId: null,
-      },
-    });
+    // if (!findPhoto.albumId || findPhoto.albumId !== albumId) {
+    //   return res.status(2.s00).send(
+    //     successMessageWithData({
+    //       message: "Photo already removed from the album",
+    //     })
+    //   );
+    // }
 
-    return res.status(200).send(successMessageWithData(deletePhoto));
+    // const deletePhoto = await prisma.album.update({
+    //   where: {
+    //     id: albumId,
+    //   },
+    //   data: {
+    //     photos: {
+    //       disconnect: {
+    //         id: photoId
+    //       }
+    //     }
+    //   },
+    // });
+
+    return res.status(200).send(successMessageWithData());
   } catch (error) {
     console.log(error);
     return res.status(500).send({

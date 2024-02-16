@@ -31,19 +31,21 @@ const getPhoto = async (req, res) => {
                     ],
                 },
                 include: {
-                    user: true
-                },    
+                    user: {
+                        select: {
+                            id: true,
+                            username: true,
+                            fullName: true,
+                            email: true,
+                            photoUrl: true
+                        }
+                    }
+                }, 
+
         }
         const photos = await prisma.photo.findMany(searchQuery);
 
-        const photosHideUserPassword = photos.map(photo => {
-            const userWithoutPassword = { ...photo.user };
-            delete userWithoutPassword.password;
-            delete userWithoutPassword.role;
-            return { ...photo, user: userWithoutPassword };
-        })
-
-        return res.status(200).send(successMessageWithData(photosHideUserPassword));
+        return res.status(200).send(successMessageWithData(photos));
 
     } catch (error) {
         console.log(error);
