@@ -14,38 +14,41 @@ const getPhoto = async (req, res) => {
 
     try {
         let searchQuery =  {
-                where: {
-                    isDeleted: false,
-                    OR: [
-                        {
-                            title: {
-                                contains: query
-                            },
-                        },
-                        {
-                            description: {
-                                contains: query
-                            },
-                            
-                        },
-                    ],
-                },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            username: true,
-                            fullName: true,
-                            email: true,
-                            photoUrl: true
-                        }
+            where: {
+                isDeleted: false,
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        fullName: true,
+                        email: true,
+                        photoUrl: true
                     }
-                }, 
+                }
+            }
+        };
 
+        if (!query) {
+            const photos = await prisma.photo.findMany(searchQuery);
+            return res.status(200).send(successMessageWithData(photos));
+        } else {
+            searchQuery.where.OR = [
+                {
+                    title: {
+                        contains: query
+                    }
+                },
+                {
+                    description: {
+                        contains: query
+                    }
+                }
+            ];
+            const photos = await prisma.photo.findMany(searchQuery);
+            return res.status(200).send(successMessageWithData(photos));
         }
-        const photos = await prisma.photo.findMany(searchQuery);
-
-        return res.status(200).send(successMessageWithData(photos));
 
     } catch (error) {
         console.log(error);
@@ -56,8 +59,9 @@ const getPhoto = async (req, res) => {
                 },
             ],
         }));
-    };
+    }
 };
+
 
 // GET PHOTO BY ID USER
 const getPhotoByIdUser = async (req, res) => {
