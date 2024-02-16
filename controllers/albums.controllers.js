@@ -510,28 +510,29 @@ const deletePhotoFromAlbum = async (req, res) => {
       );
     }
 
-    if(!findPhoto.albums.some(album => album.id === albumId) )
+    if(!findPhoto.albums.some(album => album.id === albumId)) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "photoId",
+            message: "Photo already removed from the album"
+          }
+        ]
+      }))
+    }
 
-    // if (!findPhoto.albumId || findPhoto.albumId !== albumId) {
-    //   return res.status(2.s00).send(
-    //     successMessageWithData({
-    //       message: "Photo already removed from the album",
-    //     })
-    //   );
-    // }
-
-    // const deletePhoto = await prisma.album.update({
-    //   where: {
-    //     id: albumId,
-    //   },
-    //   data: {
-    //     photos: {
-    //       disconnect: {
-    //         id: photoId
-    //       }
-    //     }
-    //   },
-    // });
+    const deletePhoto = await prisma.album.update({
+      where: {
+        id: albumId,
+      },
+      data: {
+        photos: {
+          disconnect: {
+            id: photoId
+          }
+        }
+      },
+    });
 
     return res.status(200).send(successMessageWithData());
   } catch (error) {
