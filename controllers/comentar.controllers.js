@@ -47,16 +47,9 @@ const createComentarById = async (req, res) => {
                 photoId: photoId,
                 comentar: comentar
             },
-            include: {
-                user: true
-            }
         });
 
-        const hidePasswordComentar = { ...createdComentar.user };
-        delete hidePasswordComentar.password;
-        const comentarUserWithoutPassword = { ...createdComentar, user: hidePasswordComentar };
-
-        return res.status(200).send(successMessageWithData(comentarUserWithoutPassword));
+        return res.status(200).send(successMessageWithData(createdComentar));
 
     } catch (error) {
         return res.status(500).send(badRequestMessage({
@@ -130,16 +123,10 @@ const updateComentarByUserId = async (req, res) => {
             data: {
                 comentar: comentar || findComentar.comentar,
             },
-            include: {
-                user: true
-            },
         });
 
-        const hidePasswordComentar = {...updateComentar.user};
-        delete hidePasswordComentar.password;
-        const photoHidePasswordComentar = {...updateComentar, user: hidePasswordComentar}
 
-        return res.status(200).send(successMessageWithData(photoHidePasswordComentar));
+        return res.status(200).send(successMessageWithData(updateComentar));
     } catch (error) {
         console.log(error);
         return res.status(500).send(badRequestMessage({

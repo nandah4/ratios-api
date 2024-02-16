@@ -48,11 +48,7 @@ const getFollowersController = async (req, res) => {
                     username: true,
                     fullName: true,
                     email: true,
-                    photoUrl: true,
-                    address: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    role: true
+                    photoUrl: true, 
                 }
             });
             userData.followerId = follower.followerId;
@@ -118,10 +114,6 @@ const getFollowingController = async (req, res) => {
                     fullName: true,
                     email: true,
                     photoUrl: true,
-                    address: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    role: true
                 }
             });
             userData.followingId = follow.followingId;

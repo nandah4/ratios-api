@@ -93,18 +93,17 @@ const getPhotoByIdUser = async (req, res) => {
                 userId: userId,
                 isDeleted: false
             },
-            include: {
-                user: true
-            },
+            select: {
+                user: {
+                    id: true,
+                    username: true,
+                    fullName: true,
+                    email: true,
+                    photoUrl: true
+                }
+            }
         });
-
-        const photoWithoutPassword = getPhoto.map(photo => {
-            const userWithoutPassword = { ...photo.user };
-            delete userWithoutPassword.password;
-            return { ...photo, user: userWithoutPassword }
-        });
-
-        return res.status(200).send(successMessageWithData(photoWithoutPassword));
+        return res.status(200).send(successMessageWithData(getPhoto));
 
     } catch (error) {
         console.log(error)
@@ -129,22 +128,43 @@ const getPhotoById = async (req, res) => {
                 id: photoId,
                 isDeleted: false
             },
-            include: {
-                user: true,
+            select: {
+                id: true,
+                userId: true,
+                title: true,
+                description: true,
+                createdAt: true,
+                updatedAt: true,
+                user: {
+                    select: {
+                        id: true,
+                        username: true,
+                        fullName: true,
+                        email: true,
+                        photoUrl: true
+                    }
+                },
                 comentars: {
                     where: {
-                        isDeleted: false,
+                        isDeleted: false
                     },
-                    include: {
-                        user: true,
-                    },
+                    select: {
+                        id: true,
+                        userId: true,
+                        photoId: true,
+                        comentar: true,
+                        createdAt: true,
+                        updatedAt: true
+                    }
                 },
                 likes: {
-                    include: {
-                        user: true
-                    },
-                },
-            },
+                    select: {
+                        userId: true,
+                        photoId: true,        
+                    }
+                }
+                
+            }
         });
 
         if (!photo) {
@@ -157,44 +177,7 @@ const getPhotoById = async (req, res) => {
                 ],
             }));
         };
-
-        //photos
-        const userWithoutPassword = { ...photo.user };
-        delete userWithoutPassword.password;
-        delete userWithoutPassword.role;
-        delete userWithoutPassword.address;
-        delete userWithoutPassword.createdAt;
-        delete userWithoutPassword.updatedAt;
-        const photosHideUserPassword = { ...photo, user: userWithoutPassword };
-        //comentar
-        const comentarUserWithoutPassword = photosHideUserPassword.comentars.map(comentar => {
-            const hidePasswordComentar = { ...comentar.user };
-            delete hidePasswordComentar.password;
-            delete hidePasswordComentar.role;
-            delete hidePasswordComentar.address;
-            delete hidePasswordComentar.createdAt;
-            delete hidePasswordComentar.updatedAt;
-            return { ...comentar, user: hidePasswordComentar };
-        });
-        const photoHidePasswordComentar = { ...photosHideUserPassword, comentars: comentarUserWithoutPassword }
-        //like
-        const likeUserWithoutPassword = photoHidePasswordComentar.likes.map(like => {
-            const hidePasswordLike = { ...like.user };
-            delete hidePasswordLike.password;
-            delete hidePasswordLike.role;
-            delete hidePasswordLike.address;
-            delete hidePasswordLike.createdAt;
-            delete hidePasswordLike.updatedAt;
-            return { ...like, user: hidePasswordLike };
-        })
-
-        const photoHidePasswordLike = { ...photoHidePasswordComentar, likes: likeUserWithoutPassword }
-
-        const userHasLiked = photoHidePasswordLike.likes.some(like => like.userId === parseToken.userId);
-
-        const photoWithIsLiked = { ...photoHidePasswordLike, isLiked: userHasLiked }
-
-        return res.status(200).send(successMessageWithData(photoWithIsLiked));
+        return res.status(200).send(successMessageWithData(photo));
     } catch (error) {
         console.log(error)
         return res.status(500).send(badRequestMessage({
@@ -263,17 +246,10 @@ const createPhoto = async (req, res) => {
                 locationFile,
                 userId: parseToken.userId
             },
-            include: {
-                user: true,
-            },
+            
         });
 
-        const hideUserPassword = { ...newPhoto.user };
-        delete hideUserPassword.password;
-
-        const photoWithoutPassword = { ...newPhoto, user: hideUserPassword };
-
-        return res.status(200).send(successMessageWithData(photoWithoutPassword));
+        return res.status(200).send(successMessageWithData(newPhoto));
         //         message: "Hooray! Your photo has been uploaded successfully. Celebrate the moment!"
 
     } catch (error) {
@@ -360,16 +336,9 @@ const updatePhotoById = async (req, res) => {
                 title: title || findPhoto.title,
                 description: description || findPhoto.description
             },
-            include: {
-                user: true
-            }
         });
 
-        const hidePasswordUser = { ...updatePhoto.user };
-        delete hidePasswordUser.password;
-        const photoWithoutPassword = { ...updatePhoto, user: hidePasswordUser };
-
-        return res.status(200).send(successMessageWithData(photoWithoutPassword));
+        return res.status(200).send(successMessageWithData(updatePhoto));
 
     } catch (error) {
         return res.status(500).send(badRequestMessage({
@@ -440,7 +409,6 @@ const deletePhotoById = async (req, res) => {
             },
             data: {
                 isDeleted: true,
-                albumId: null
             },
         });
 
