@@ -93,8 +93,9 @@ const getPhotoByIdUser = async (req, res) => {
                 userId: userId,
                 isDeleted: false
             },
-            select: {
-                user: {
+           include: {
+            user: {
+                select: {
                     id: true,
                     username: true,
                     fullName: true,
@@ -102,6 +103,8 @@ const getPhotoByIdUser = async (req, res) => {
                     photoUrl: true
                 }
             }
+           }
+            
         });
         return res.status(200).send(successMessageWithData(getPhoto));
 
@@ -132,6 +135,7 @@ const getPhotoById = async (req, res) => {
                 id: true,
                 userId: true,
                 title: true,
+                locationFile: true,
                 description: true,
                 createdAt: true,
                 updatedAt: true,
@@ -179,7 +183,6 @@ const getPhotoById = async (req, res) => {
         };
         return res.status(200).send(successMessageWithData(photo));
     } catch (error) {
-        console.log(error)
         return res.status(500).send(badRequestMessage({
             messages: [
                 {
