@@ -96,13 +96,15 @@ const getPhotoByIdUser = async (req, res) => {
         userId: userId,
         isDeleted: false,
       },
-      select: {
+      include: {
         user: {
-          id: true,
-          username: true,
-          fullName: true,
-          email: true,
-          photoUrl: true,
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            photoUrl: true,
+          },
         },
       },
     });
@@ -137,7 +139,7 @@ const getPhotoById = async (req, res) => {
         id: true,
         userId: true,
         title: true,
-                locationFile: true,
+        locationFile: true,
         description: true,
         createdAt: true,
         updatedAt: true,
@@ -173,27 +175,32 @@ const getPhotoById = async (req, res) => {
       },
     });
 
-        if (!photo) {
-            return res.status(404).send(badRequestMessage({
-                messages: [
-                    {
-                        field: "id",
-                        message: "Photo not found"
-                    },
-                ],
-            }));
-        };
-        return res.status(200).send(successMessageWithData(photo));
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send(badRequestMessage({
-            messages: [
-                {
-                    message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later."
-                },
-            ],
-        }));
-    };
+    if (!photo) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "id",
+              message: "Photo not found",
+            },
+          ],
+        })
+      );
+    }
+    return res.status(200).send(successMessageWithData(photo));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send(
+      badRequestMessage({
+        messages: [
+          {
+            message:
+              "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+          },
+        ],
+      })
+    );
+  }
 };
 
 // CREATE PHOTO
