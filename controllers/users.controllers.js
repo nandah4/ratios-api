@@ -620,6 +620,66 @@ const getAlbumsByUserIdController = async (req, res) => {
   }
 };
 
+// GET PHOTO BY ID USER
+const getPhotoByIdUser = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const { userId } = req.params;
+
+  try {
+    const findUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+    });
+
+    if (!findUser) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "User not found",
+            },
+          ],
+        })
+      );
+    }
+
+    // Get All Foto User Id
+    const getPhoto = await prisma.photo.findMany({
+      where: {
+        userId: userId,
+        isDeleted: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            email: true,
+            photoUrl: true,
+          },
+        },
+      },
+    });
+    return res.status(200).send(successMessageWithData(getPhoto));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send(
+      badRequestMessage({
+        messages: [
+          {
+            message:
+              "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+          },
+        ],
+      })
+    );
+  }
+};
+
 // ADMIN - login admin
 const loginAdminController = async (req, res) => {
   const email = req.body?.email;
@@ -854,7 +914,8 @@ module.exports = {
   loginController,
   loginAdminController,
   registerController,
-  getUserByIdUser,
+  getUserByIdUser, // new
+  getPhotoByIdUser,
   getOtherUser,
   updateProfileByIdUser,
   getAlbumsByUserIdController,
