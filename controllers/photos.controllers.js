@@ -194,16 +194,8 @@ const getPhotoById = async (req, res) => {
 
     const isLiked = photo.likes.some(like => like.userId === parseToken.userId);
     const responseData = {
-      id: photo.id,
-      userId: photo.userId,
-      title: photo.title,
-      locationFile: photo.locationFile,
-      description: photo.description,
-      createdAt: photo.createdAt,
-      updatedAt: photo.updatedAt,
-      user: photo.user,
-      comentars: photo.comentars,
-      isLiked: isLiked,
+      ...photo,
+      isLiked: isLiked
     }
     return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
