@@ -156,8 +156,8 @@ const getPhotoById = async (req, res) => {
           where: {
             isDeleted: false,
           },
-          
-          select: { 
+
+          select: {
             id: true,
             userId: true,
             photoId: true,
@@ -175,7 +175,8 @@ const getPhotoById = async (req, res) => {
             },
           },
         },
-        likes: true
+        likes: true,
+        albums: true,
       },
     });
 
@@ -192,11 +193,11 @@ const getPhotoById = async (req, res) => {
       );
     }
 
-    const isLiked = photo.likes.some(like => like.userId === parseToken.userId);
+    const isLiked = photo.likes.some((like) => like.userId === parseToken.userId);
     const responseData = {
       ...photo,
-      isLiked: isLiked
-    }
+      isLiked: isLiked,
+    };
     return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
