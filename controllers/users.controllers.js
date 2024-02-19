@@ -559,7 +559,7 @@ const updateProfileByIdUser = async (req, res) => {
   }
 };
 
-// USER ALBUM :
+// USER - get album by userId
 const getAlbumsByUserIdController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
   const { userId } = req.params;

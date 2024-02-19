@@ -156,22 +156,26 @@ const getPhotoById = async (req, res) => {
           where: {
             isDeleted: false,
           },
-          select: {
+          
+          select: { 
             id: true,
             userId: true,
-            user: true,
             photoId: true,
             comentar: true,
             createdAt: true,
             updatedAt: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+                fullName: true,
+                email: true,
+                photoUrl: true,
+              },
+            },
           },
         },
-        likes: {
-          select: {
-            userId: true,
-            photoId: true,
-          },
-        },
+        likes: true
       },
     });
 
@@ -180,14 +184,28 @@ const getPhotoById = async (req, res) => {
         badRequestMessage({
           messages: [
             {
-              field: "id",
+              field: "photoId",
               message: "Photo not found",
             },
           ],
         })
       );
     }
-    return res.status(200).send(successMessageWithData(photo));
+
+    const isLiked = photo.likes.some(like => like.userId === parseToken.userId);
+    const responseData = {
+      id: photo.id,
+      userId: photo.userId,
+      title: photo.title,
+      locationFile: photo.locationFile,
+      description: photo.description,
+      createdAt: photo.createdAt,
+      updatedAt: photo.updatedAt,
+      user: photo.user,
+      comentars: photo.comentars,
+      isLiked: isLiked,
+    }
+    return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
     return res.status(500).send(
