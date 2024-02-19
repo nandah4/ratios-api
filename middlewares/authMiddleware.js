@@ -49,10 +49,42 @@ const authMiddlewareAdmin = async(req, res, next) => {
 
   try {
     if(!authorization) {
-      return res.status(200).send(authMessage());
+      return res.status(401).send(authMessage());
     }
+
+    const parse = verifyJwt(authorization);
+    if(!parse || !parse?.userId) {
+      return res.status(401).send(badRequestMessage({
+        messages: [
+          {
+            message: "Invalid token provided"
+          }
+        ],
+      }));
+    };
+
+    const prisma = new PrismaClient();
+    const user = prisma.user.findFirst({
+      where: {
+        id: parse?.userId,
+        role: 'ADMIN'
+      },
+    });
+
+    if(!user) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "id",
+            message: "Admin not found"
+          }
+        ]
+      }));
+    };
+
+    return next();
   } catch (error) {
     
   }
 }
-module.exports = { authMiddleware };
+module.exports = { authMiddleware, authMiddlewareAdmin };

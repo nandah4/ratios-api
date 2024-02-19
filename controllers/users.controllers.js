@@ -24,7 +24,7 @@ async function loginController(req, res) {
     if (!password) {
       error.push({
         field: "password",
-        message: "password kocong",
+        message: "password kosong",
       });
     }
 
@@ -50,7 +50,8 @@ async function loginController(req, res) {
           messages: [
             {
               email: "email",
-              message: "Email not found. Please double-check your email address or consider signing up if you don't have an account.",
+              message:
+                "Email not found. Please double-check your email address or consider signing up if you don't have an account.",
             },
           ],
         })
@@ -64,7 +65,8 @@ async function loginController(req, res) {
           messages: [
             {
               field: "password",
-              message: "The password is not valid. Make sure your password meets the specified requirements",
+              message:
+                "The password is not valid. Make sure your password meets the specified requirements",
             },
           ],
         })
@@ -148,12 +150,12 @@ async function registerController(req, res) {
         message: "addrres can not be empty",
       });
     }
-    
+
     const passwordRegex = /^.{8,}$/;
-    if(!passwordRegex.test(password)) {
+    if (!passwordRegex.test(password)) {
       error.push({
         field: "password",
-        message: "Input password minimum 8 character"
+        message: "Input password minimum 8 character",
       });
     }
 
@@ -320,7 +322,8 @@ const getUserByIdUser = async (req, res) => {
       badRequestMessage({
         messages: [
           {
-            message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+            message:
+              "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
           },
         ],
       })
@@ -329,7 +332,8 @@ const getUserByIdUser = async (req, res) => {
 };
 
 function isValidUUID(uuid) {
-  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+  const uuidRegex =
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
   return uuidRegex.test(uuid);
 }
 
@@ -391,7 +395,9 @@ const getOtherUser = async (req, res) => {
           messages: [
             {
               field: isValidUUID(identifier) ? " " : "username or userId",
-              message: isValidUUID(identifier) ? "User not found" : "user with the specified username not found",
+              message: isValidUUID(identifier)
+                ? "User not found"
+                : "user with the specified username not found",
             },
           ],
         })
@@ -551,7 +557,8 @@ const updateProfileByIdUser = async (req, res) => {
       badRequestMessage({
         messages: [
           {
-            message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+            message:
+              "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
           },
         ],
       })
@@ -593,9 +600,9 @@ const getAlbumsByUserIdController = async (req, res) => {
         isDeleted: false,
       },
       include: {
-        photos: true
-      }
-      });
+        photos: true,
+      },
+    });
 
     return res.status(200).send(successMessageWithData(album));
   } catch (error) {
@@ -604,7 +611,8 @@ const getAlbumsByUserIdController = async (req, res) => {
       badRequestMessage({
         messages: [
           {
-            message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+            message:
+              "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
           },
         ],
       })
@@ -681,7 +689,8 @@ const loginAdminController = async (req, res) => {
           messages: [
             {
               field: "role",
-              message: "You don't have permission to access this resource. Please log in with an admin account.",
+              message:
+                "You don't have permission to access this resource. Please log in with an admin account.",
             },
           ],
         })
@@ -708,4 +717,147 @@ const loginAdminController = async (req, res) => {
   }
 };
 
-module.exports = { loginController, loginAdminController, registerController, getUserByIdUser, getOtherUser, updateProfileByIdUser, getAlbumsByUserIdController };
+// ADMIN - getAllUser
+const getAllUserController = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+
+  try {
+    const admin = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        role: "ADMIN",
+      },
+    });
+
+    if (!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId or role",
+              message: "You don`t have permission to access this resource",
+            },
+          ],
+        })
+      );
+    }
+
+    const getAllUser = await prisma.user.findMany({
+      where: {
+        isDeleted: false,
+        role: "USER",
+      },
+    });
+
+    return res.status(200).send(successMessageWithData(getAllUser));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// ADMIN - deleteUser
+const deleteUserController = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const { userId } = req.params;
+
+  try {
+    const admin = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        role: "ADMIN",
+      },
+    });
+
+    if (!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              message: "You don`t have permission to access this resource",
+            },
+          ],
+        })
+      );
+    }
+
+    const findUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        role: "USER",
+      },
+    });
+
+    if (!findUser) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "User not found",
+            },
+          ],
+        })
+      );
+    }
+
+    //delete album
+    await prisma.album.updateMany({
+      where: {
+        userId: userId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    //delete foto
+    await prisma.photo.updateMany({
+      where: {
+        userId: userId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+    //delete like
+    await prisma.like.deleteMany({
+      where: {
+        userId: userId,
+      },
+    });
+
+    //delete comentar
+    await prisma.comentar.updateMany({
+      where: {
+        userId: userId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    const deleteUser = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    return res.status(200).send(successMessageWithData(deleteUser));
+  } catch (error) {
+    console.log(error);
+  }
+};
+module.exports = {
+  loginController,
+  loginAdminController,
+  registerController,
+  getUserByIdUser,
+  getOtherUser,
+  updateProfileByIdUser,
+  getAlbumsByUserIdController,
+  getAllUserController,
+  deleteUserController
+};

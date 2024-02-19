@@ -1,12 +1,14 @@
 const express = require("express");
-const { authMiddleware } = require('../middlewares/authMiddleware')
+const { authMiddleware, authMiddlewareAdmin } = require('../middlewares/authMiddleware')
 const { loginController,
     loginAdminController,
     registerController,
     getUserByIdUser,
     updateProfileByIdUser,
     getOtherUser,
-    getAlbumsByUserIdController
+    getAlbumsByUserIdController,
+    getAllUserController,
+    deleteUserController
 } = require("../controllers/users.controllers");
 const {
     getFollowersController,
@@ -23,6 +25,9 @@ const usersRoutes = express.Router();
 // login admin
 usersRoutes.post("/auth/login/admin", loginAdminController);
 
+// Admin manage user 
+usersRoutes.get("/", authMiddlewareAdmin, getAllUserController);
+usersRoutes.delete("/:userId/", authMiddlewareAdmin, deleteUserController);
 // login dan register controllers
 usersRoutes.post("/auth/login", loginController);
 usersRoutes.post("/auth/register", registerController);
