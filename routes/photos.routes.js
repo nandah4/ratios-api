@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const photosRoutes = express.Router();
-const { getPhoto, getPhotoById, getPhotoByIdUser, createPhoto, updatePhotoById, deletePhotoById } = require("../controllers/photos.controllers");
+const { getPhoto, getPhotoById, createPhoto, updatePhotoById, deletePhotoById } = require("../controllers/photos.controllers");
 const { fileStorage, fileFilter } = require("../middlewares/photoMiddleware");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { createComentarById, updateComentarByUserId, deleteComentarById, getComentarByPhotoId } = require("../controllers/comentar.controllers");
@@ -9,7 +9,6 @@ const { createLikeByIdUser } = require("../controllers/like.controllers");
 const { createDonation } = require("../controllers/donation.controllers");
 
 // ROUTES PHOTO
-photosRoutes.get("/users/:userId", authMiddleware, getPhotoByIdUser); // by id user
 photosRoutes.get("/:photoId", authMiddleware, getPhotoById); // by id photo
 photosRoutes.get("/", authMiddleware, getPhoto); // all photo
 photosRoutes.post("/", authMiddleware, multer({ storage: fileStorage, fileFilter }).single("locationFile"), createPhoto);

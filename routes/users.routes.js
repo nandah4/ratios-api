@@ -8,7 +8,8 @@ const { loginController,
     getOtherUser,
     getAlbumsByUserIdController,
     getAllUserController,
-    deleteUserController
+    deleteUserController,
+    getPhotoByIdUser
 } = require("../controllers/users.controllers");
 const {
     getFollowersController,
@@ -19,6 +20,7 @@ const {
 } = require("../controllers/follows.controllers");
 const multer = require('multer');
 const { fileStorage2, fileFilter } = require('../middlewares/photoMiddleware');
+const { getPhoto } = require("../controllers/photos.controllers");
 
 const usersRoutes = express.Router();
 
@@ -26,8 +28,9 @@ const usersRoutes = express.Router();
 usersRoutes.post("/auth/login/admin", loginAdminController);
 
 // Admin manage user 
-usersRoutes.get("/", authMiddlewareAdmin, getAllUserController);
+usersRoutes.get("/user", authMiddlewareAdmin, getAllUserController);
 usersRoutes.delete("/:userId/", authMiddlewareAdmin, deleteUserController);
+
 // login dan register controllers
 usersRoutes.post("/auth/login", loginController);
 usersRoutes.post("/auth/register", registerController);
@@ -39,6 +42,9 @@ usersRoutes.put("/profile", authMiddleware, multer({ storage: fileStorage2, file
 
 // user album
 usersRoutes.get("/:userId/albums", authMiddleware, getAlbumsByUserIdController);
+
+// user photo
+usersRoutes.get("/:userId/photos", authMiddleware, getPhotoByIdUser);
 
 // following follower
 usersRoutes.get("/:userId/followers", authMiddleware, getFollowersController);
