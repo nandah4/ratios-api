@@ -431,14 +431,34 @@ const addPhotoToAlbum = async (req, res) => {
     });
 
     if (existingPhotoToAlbum && existingPhotoToAlbum.photos.length > 0) {
-      return res.status(400).send(badRequestMessage({
-        messages: [
-          {
-            field: "photoId",
-            message: "You can only add the same photo once"
-          }
-        ]
-      }))
+      const deletePhotoToAlbum = await prisma.album.update({
+        where: {
+          id: albumId,
+        },
+        data: {
+          photos: {
+            disconnect: {
+              id: photoId,
+            },
+          },
+        },
+      });
+
+      await prisma.photo.update({
+        where: {
+          id: photoId,
+        },
+        data: {
+          albums: {
+            disconnect: {
+              id: albumId,
+            },
+          },
+        },
+      });
+
+      const response = { isAddedToAlbum: false};
+      return res.status(200).send(successMessageWithData(response));
     }
 
     const addPhotoToAlbum = await prisma.album.update({
@@ -467,7 +487,8 @@ const addPhotoToAlbum = async (req, res) => {
       },
     });
 
-    return res.status(200).send(successMessageWithData());
+    const response = { isAddedToAlbum: true};
+    return res.status(200).send(successMessageWithData(response));
   } catch (error) {
     console.log(error);
     return res.status(500).send(
