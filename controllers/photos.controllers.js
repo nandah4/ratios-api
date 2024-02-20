@@ -115,7 +115,8 @@ const getPhotoById = async (req, res) => {
             },
           },
         },
-        likes: true
+        likes: true,
+        albums:true
       },
     });
 
@@ -132,10 +133,13 @@ const getPhotoById = async (req, res) => {
       );
     }
 
+
     const isLiked = photo.likes.some(like => like.userId === parseToken.userId);
+    const isPhotoToAdded = photo.albums.length > 0;
+
     const responseData = {
       ...photo,
-      isLiked: isLiked
+      isLiked: isLiked,
     }
     return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {

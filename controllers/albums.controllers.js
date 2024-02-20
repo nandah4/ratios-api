@@ -1,6 +1,10 @@
 const { PrismaClient } = require("@prisma/client");
 const { verifyJwt } = require("../utils/jwt");
-const { successMessageWithData, successCreateMessageWithData, badRequestMessage } = require("../utils/message");
+const {
+  successMessageWithData,
+  successCreateMessageWithData,
+  badRequestMessage,
+} = require("../utils/message");
 const { parse } = require("dotenv");
 
 // GET DETAIL ALBUM
@@ -35,7 +39,7 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
         id: albumId,
         isDeleted: false,
       },
-      select : {
+      select: {
         id: true,
         userId: true,
         title: true,
@@ -69,10 +73,10 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
                 email: true,
                 photoUrl: true,
               },
-          },
+            },
           },
         },
-      }
+      },
     });
 
     if (!album) {
@@ -104,7 +108,8 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
       badRequestMessage({
         messages: [
           {
-            message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+            message:
+              "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
           },
         ],
       })
@@ -149,10 +154,10 @@ const createAlbumByUserIdController = async (req, res) => {
             username: true,
             fullName: true,
             email: true,
-            photoUrl: true
-          }
-        }
-      }
+            photoUrl: true,
+          },
+        },
+      },
     });
 
     // const hideUserPasswordPhotoAlbum = { ...newAlbum.user };
@@ -162,11 +167,12 @@ const createAlbumByUserIdController = async (req, res) => {
 
     return res.send(successMessageWithData(newAlbum));
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).send({
       messages: [
         {
-          message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+          message:
+            "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
         },
       ],
     });
@@ -260,7 +266,8 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
       badRequestMessage({
         messages: [
           {
-            message: "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+            message:
+              "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
           },
         ],
       })
@@ -410,6 +417,30 @@ const addPhotoToAlbum = async (req, res) => {
       );
     }
 
+    const existingPhotoToAlbum = await prisma.album.findFirst({
+      where: {
+        id: albumId,
+      },
+      include: {
+        photos: {
+          where: {
+            id: photoId,
+          },
+        },
+      },
+    });
+
+    if (existingPhotoToAlbum && existingPhotoToAlbum.photos.length > 0) {
+      return res.status(400).send(badRequestMessage({
+        messages: [
+          {
+            field: "photoId",
+            message: "You can only add the same photo once"
+          }
+        ]
+      }))
+    }
+
     const addPhotoToAlbum = await prisma.album.update({
       where: {
         id: albumId,
@@ -417,27 +448,26 @@ const addPhotoToAlbum = async (req, res) => {
       data: {
         photos: {
           connect: {
-            id: photoId
-          }
-        }
-      }
+            id: photoId,
+          },
+        },
+      },
     });
 
-  await prisma.photo.update({
+    await prisma.photo.update({
       where: {
         id: photoId,
       },
       data: {
         albums: {
           connect: {
-            id: albumId
-          }
-        }
-      }
+            id: albumId,
+          },
+        },
+      },
     });
 
     return res.status(200).send(successMessageWithData());
-
   } catch (error) {
     console.log(error);
     return res.status(500).send(
@@ -508,7 +538,6 @@ const deletePhotoFromAlbum = async (req, res) => {
           ],
         })
       );
-
     }
 
     const deletePhoto = await prisma.album.update({
@@ -518,9 +547,9 @@ const deletePhotoFromAlbum = async (req, res) => {
       data: {
         photos: {
           disconnect: {
-            id: photoId
-          }
-        }
+            id: photoId,
+          },
+        },
       },
     });
 
