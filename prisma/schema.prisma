@@ -18,11 +18,12 @@ model User {
     createdAt DateTime   @default(now())
     updatedAt DateTime   @default(now())
     isDeleted Boolean    @default(false)
-    role      Role       @default(USER)
+    role      ROLE       @default(USER)
     photos    Photo[]
     albums    Album[]
     comentars Comentar[]
     likes     Like[]
+    donation  Donation[]
     followers Follows[]  @relation("followers")
     following Follows[]  @relation("following")
 }
@@ -37,7 +38,7 @@ model Follows {
     @@id([followerId, followingId])
 }
 
-enum Role {
+enum ROLE {
     USER
     ADMIN
 }
@@ -55,6 +56,7 @@ model Photo {
     comentars    Comentar[]
     likes        Like[]
     albums       Album[]
+    donation    Donation[]
 }
 
 model Album {
@@ -88,4 +90,22 @@ model Like {
     photo   Photo  @relation(fields: [photoId], references: [id])
 
     @@id([userId, photoId])
+}
+
+model Donation{
+    id String @id 
+    userId String
+    user User @relation(fields: [userId], references: [id])
+    photoId String
+    photo Photo @relation(fields: [photoId], references: [id])
+    amount Int
+    status STATUS_PAYMENT @default(PENDING)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+}
+
+enum STATUS_PAYMENT {
+    PENDING
+    SUCCESS
+    FAILED
 }
