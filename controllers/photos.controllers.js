@@ -133,11 +133,12 @@ const getPhotoById = async (req, res) => {
       );
     }
 
-    const isLiked = photo.likes.some((like) => like.userId === parseToken.userId);
+
+    const isLiked = photo.likes.some(like => like.userId === parseToken.userId);
     const responseData = {
       ...photo,
-      isLiked: isLiked,
-    };
+      isLiked: isLiked
+    }
     return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
