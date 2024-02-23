@@ -453,6 +453,17 @@ const updateProfileByIdUser = async (req, res) => {
       },
     });
 
+    if(!existingUser) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId",
+            message: "user not found"
+          }
+        ],
+      }));
+    };
+
     // Validasi batas update username 7 hari
     if (!username || username === existingUser.username) {
       const updateProfileUser = await prisma.user.update({
