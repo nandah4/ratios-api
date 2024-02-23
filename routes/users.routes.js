@@ -3,13 +3,11 @@ const { authMiddleware, authMiddlewareAdmin } = require('../middlewares/authMidd
 const { loginController,
     loginAdminController,
     registerController,
-    getUserByIdUser,
+    getAllUser,
     updateProfileByIdUser,
     getOtherUser,
     getAlbumsByUserIdController,
-    getAllUserController,
-    deleteUserController,
-    getPhotoByIdUser
+    getPhotoByIdUser,
 } = require("../controllers/users.controllers");
 const {
     getFollowersController,
@@ -27,16 +25,12 @@ const usersRoutes = express.Router();
 // login admin
 usersRoutes.post("/auth/login/admin", loginAdminController);
 
-// Admin manage user 
-usersRoutes.get("/user", authMiddlewareAdmin, getAllUserController);
-usersRoutes.delete("/:userId/", authMiddlewareAdmin, deleteUserController);
-
 // login dan register controllers
 usersRoutes.post("/auth/login", loginController);
 usersRoutes.post("/auth/register", registerController);
 
 // profile user
-usersRoutes.get("/", authMiddleware, getUserByIdUser);
+usersRoutes.get("/", authMiddleware, getAllUser);
 usersRoutes.get("/:identifier", authMiddleware, getOtherUser);
 usersRoutes.put("/profile", authMiddleware, multer({ storage: fileStorage2, fileFilter }).single('photoUrl'), updateProfileByIdUser);
 

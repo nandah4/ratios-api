@@ -6,6 +6,7 @@ const { usersRoutes } = require("./routes/users.routes");
 const { fileRoutes } = require("./routes/files.routes");
 const { photosRoutes } = require("./routes/photos.routes");
 const { albumRoutes } = require("./routes/album.routes");
+const { adminRoutes } = require("./routes/admin.routes");
 
 const app = express();
 const multer = require("multer");
@@ -28,6 +29,7 @@ app.use("/files", fileRoutes);
 app.use("/photos", photosRoutes);
 app.use("/albums", albumRoutes);
 app.use("/donation", donationRoutes);
+app.use("/admin", adminRoutes);
 
 app.listen(ENV_PORT, () => {
   console.log(`ratio service listening on http://localhost:${ENV_PORT}`);

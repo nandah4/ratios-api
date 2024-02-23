@@ -286,14 +286,14 @@ async function registerController(req, res) {
 }
 
 // USER - get user profile
-const getUserByIdUser = async (req, res) => {
+const getAllUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
   try {
     const getUser = await prisma.user.findMany({
       where: {
-        id: parseToken.userId,
         isDeleted: false,
+        role: "USER"
       },
     });
 
@@ -302,7 +302,7 @@ const getUserByIdUser = async (req, res) => {
         badRequestMessage({
           messages: [
             {
-              field: "username",
+              field: "userId",
               message: "User not found",
             },
           ],
@@ -310,12 +310,7 @@ const getUserByIdUser = async (req, res) => {
       );
     }
 
-    const getUserWithoutPw = getUser.map((user) => {
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
-    });
-
-    return res.send(successMessageWithData(getUserWithoutPw));
+    return res.send(successMessageWithData(getUser));
   } catch (error) {
     console.log(error);
     return res.status(500).send(
@@ -777,148 +772,14 @@ const loginAdminController = async (req, res) => {
   }
 };
 
-// ADMIN - getAllUser
-const getAllUserController = async (req, res) => {
-  const parseToken = verifyJwt(req.headers?.authorization);
 
-  try {
-    const admin = await prisma.user.findUnique({
-      where: {
-        id: parseToken.userId,
-        role: "ADMIN",
-      },
-    });
-
-    if (!admin || admin.role !== "ADMIN") {
-      return res.status(403).send(
-        badRequestMessage({
-          messages: [
-            {
-              field: "userId or role",
-              message: "You don`t have permission to access this resource",
-            },
-          ],
-        })
-      );
-    }
-
-    const getAllUser = await prisma.user.findMany({
-      where: {
-        isDeleted: false,
-        role: "USER",
-      },
-    });
-
-    return res.status(200).send(successMessageWithData(getAllUser));
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-// ADMIN - deleteUser
-const deleteUserController = async (req, res) => {
-  const parseToken = verifyJwt(req.headers?.authorization);
-  const { userId } = req.params;
-
-  try {
-    const admin = await prisma.user.findUnique({
-      where: {
-        id: parseToken.userId,
-        role: "ADMIN",
-      },
-    });
-
-    if (!admin || admin.role !== "ADMIN") {
-      return res.status(403).send(
-        badRequestMessage({
-          messages: [
-            {
-              message: "You don`t have permission to access this resource",
-            },
-          ],
-        })
-      );
-    }
-
-    const findUser = await prisma.user.findFirst({
-      where: {
-        id: userId,
-        role: "USER",
-      },
-    });
-
-    if (!findUser) {
-      return res.status(404).send(
-        badRequestMessage({
-          messages: [
-            {
-              field: "userId",
-              message: "User not found",
-            },
-          ],
-        })
-      );
-    }
-
-    //delete album
-    await prisma.album.updateMany({
-      where: {
-        userId: userId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
-    //delete foto
-    await prisma.photo.updateMany({
-      where: {
-        userId: userId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-    //delete like
-    await prisma.like.deleteMany({
-      where: {
-        userId: userId,
-      },
-    });
-
-    //delete comentar
-    await prisma.comentar.updateMany({
-      where: {
-        userId: userId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
-    const deleteUser = await prisma.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
-    return res.status(200).send(successMessageWithData(deleteUser));
-  } catch (error) {
-    console.log(error);
-  }
-};
 module.exports = {
   loginController,
-  loginAdminController,
+  loginAdminController, // admin
   registerController,
-  getUserByIdUser, // new
+  getAllUser, // new
   getPhotoByIdUser,
   getOtherUser,
   updateProfileByIdUser,
-  getAlbumsByUserIdController,
-  getAllUserController,
-  deleteUserController
+  getAlbumsByUserIdController, 
 };
