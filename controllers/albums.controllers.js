@@ -39,13 +39,7 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
         id: albumId,
         isDeleted: false,
       },
-      select: {
-        id: true,
-        userId: true,
-        title: true,
-        description: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
         user: {
           select: {
             id: true,
@@ -53,6 +47,7 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
             fullName: true,
             email: true,
             photoUrl: true,
+            isDeleted: true
           },
         },
         photos: {
@@ -76,16 +71,16 @@ const getAlbumByAlbumIdAndUserIdController = async (req, res) => {
             },
           },
         },
-      },
+      }
     });
 
-    if (!album) {
+    if (album.user.isDeleted) {
       return res.status(404).send(
         badRequestMessage({
           messages: [
             {
-              field: "albumId or userId",
-              message: "album not found",
+              field: "userId",
+              message: "Tidak dapat menemukan album yang dikaitkan dengan pengguna.",
             },
           ],
         })
@@ -190,6 +185,13 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
         id: albumId,
         isDeleted: false,
       },
+      include: {
+        user: {
+          select: {
+            isDeleted: true,
+          }
+        }
+      }
     });
 
     if (!findAlbum) {
@@ -203,6 +205,17 @@ const updateAlbumByAlbumIdAndUserIdController = async (req, res) => {
           ],
         })
       );
+    }
+
+    if(findAlbum.user.isDeleted) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId",
+            message: "Tidak dapat menemukan album yang dikaitkan dengan pengguna."
+          }
+        ]
+      }))
     }
 
     if (findAlbum.userId !== parseToken.userId) {
@@ -373,6 +386,13 @@ const addPhotoToAlbum = async (req, res) => {
         id: albumId,
         isDeleted: false,
       },
+      include: {
+        user: {
+          select: {
+            isDeleted: true
+          }
+        }
+      }
     });
 
     if (!findAlbum) {
@@ -386,11 +406,29 @@ const addPhotoToAlbum = async (req, res) => {
       );
     }
 
+    if(findAlbum.user.isDeleted) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId",
+            message: "Tidak dapat menemukan ke album yang terkait dengan pengguna"
+          }
+        ]
+      }))
+    }
+
     const findPhoto = await prisma.photo.findFirst({
       where: {
         id: photoId,
         isDeleted: false,
       },
+      include: {
+        user: {
+          select: {
+            isDeleted: true
+          }
+        }
+      }
     });
 
     if (!findPhoto) {
@@ -402,6 +440,17 @@ const addPhotoToAlbum = async (req, res) => {
           },
         })
       );
+    }
+
+    if(findAlbum.user.isDeleted) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId",
+            message: "Tidak dapat menemukan ke foto yang terkait dengan pengguna"
+          }
+        ]
+      }))
     }
 
     if (findAlbum.userId !== parseToken.userId) {

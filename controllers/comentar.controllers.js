@@ -13,7 +13,7 @@ const getComentarByPhotoId = async (req, res) => {
         where: {
             id: photoId,
             isDeleted: false
-        }
+        },
     });
 
     if(!existingPhoto) {
@@ -30,7 +30,10 @@ const getComentarByPhotoId = async (req, res) => {
     const getComentar = await prisma.comentar.findMany({
         where: {
             photoId: photoId,
-            isDeleted: false
+            isDeleted: false,
+            user: {
+              isDeleted: false,
+            }
         }
     });
 

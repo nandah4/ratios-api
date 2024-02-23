@@ -86,42 +86,6 @@ const deleteUserController = async (req, res) => {
       );
     }
 
-    //delete album
-    await prisma.album.updateMany({
-      where: {
-        userId: userId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
-    //delete foto
-    await prisma.photo.updateMany({
-      where: {
-        userId: userId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-    //delete like
-    await prisma.like.deleteMany({
-      where: {
-        userId: userId,
-      },
-    });
-
-    //delete comentar
-    await prisma.comentar.updateMany({
-      where: {
-        userId: userId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
     const deleteUser = await prisma.user.update({
       where: {
         id: userId,

@@ -29,11 +29,14 @@ const getFollowersController = async (req, res) => {
 
         const followers = await prisma.follows.findMany({
             where: {
-                followingId: userId
+                followingId: userId,
+                follower: {
+                    isDeleted: false,
+                }
             },
             select: {
-                followerId: true
-            }
+                followerId: true,
+            },
         });
 
         const followersData = [];
@@ -41,7 +44,7 @@ const getFollowersController = async (req, res) => {
         for (const follower of followers) {
             const userData = await prisma.user.findUnique({
                 where: {
-                    id: follower.followerId
+                    id: follower.followerId,
                 },
                 select: {
                     id: true,
@@ -95,6 +98,9 @@ const getFollowingController = async (req, res) => {
         const following = await prisma.follows.findMany({
             where: {
                 followerId: userId,
+                following: {
+                    isDeleted: false
+                }
             },
             select: {
                 followingId: true
@@ -116,8 +122,8 @@ const getFollowingController = async (req, res) => {
                     photoUrl: true,
                 }
             });
-            userData.followingId = follow.followingId;
-            followingData.push(userData)
+                userData.followingId = follow.followingId;
+                followingData.push(userData)      
         }
 
         return res.status(200).send(successMessageWithData(followingData))
@@ -219,14 +225,14 @@ const unfollowControllers = async (req, res) => {
         });
 
         if (!existingUser) {
-            return res.status(404).send(badRequestMessage)({
+            return res.status(404).send(badRequestMessage({
                 messages: [
                     {
                         field: "userId",
                         message: "User not found",
                     },
                 ],
-            });
+            }));
         };
 
         if (parseToken.userId === userId) {
@@ -326,7 +332,7 @@ const deleteFollowersController = async (req, res) => {
             return res.status(404).send(badRequestMessage({
                 messages: [
                     {
-                        field: "followingId",
+                        field: "followers",
                         message: "Followers not found"
                     },
                 ],

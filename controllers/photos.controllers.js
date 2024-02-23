@@ -25,12 +25,16 @@ const getPhoto = async (req, res) => {
             fullName: true,
             email: true,
             photoUrl: true,
+            isDeleted: true
           },
         },
       },
     };
 
     if (!query) {
+      searchQuery.where.user = {
+        isDeleted: false
+      }
       const photos = await prisma.photo.findMany(searchQuery);
       return res.status(200).send(successMessageWithData(photos));
     } else {
@@ -46,6 +50,9 @@ const getPhoto = async (req, res) => {
           },
         },
       ];
+      searchQuery.where.user = {
+        isDeleted: false
+      };
       const photos = await prisma.photo.findMany(searchQuery);
       return res.status(200).send(successMessageWithData(photos));
     }
@@ -90,13 +97,16 @@ const getPhotoById = async (req, res) => {
             fullName: true,
             email: true,
             photoUrl: true,
+            isDeleted: true
           },
         },
         comentars: {
           where: {
             isDeleted: false,
+            user: {
+              isDeleted: false
+            }
           },
-
           select: {
             id: true,
             userId: true,
@@ -115,30 +125,49 @@ const getPhotoById = async (req, res) => {
             },
           },
         },
-        likes: true,
+        likes: {
+          where: {
+            user: {
+              isDeleted: false
+            }
+          }
+        },
         albums: true,
-      },
+      }
     });
-
+    
     if (!photo) {
       return res.status(404).send(
         badRequestMessage({
           messages: [
             {
               field: "photoId",
-              message: "Photo not found",
+              message: "photo not found",
             },
           ],
         })
       );
     }
 
+    if (photo.user.isDeleted) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "Tidak dapat menemukan foto yang dikaitkan dengan pengguna.",
+            },
+          ],
+        })
+      );
+    }
+    
 
-    const isLiked = photo.likes.some(like => like.userId === parseToken.userId);
+    const isLiked = photo.likes.some((like) => like.userId === parseToken.userId);
     const responseData = {
       ...photo,
-      isLiked: isLiked
-    }
+      isLiked: isLiked,
+    };
     return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
@@ -244,20 +273,39 @@ const updatePhotoById = async (req, res) => {
         userId: parseToken.userId,
         isDeleted: false,
       },
+      include: {
+        user: {
+          select: {
+            isDeleted: true
+          }
+        }
+      }
     });
 
+    
     if (!findPhoto) {
       return res.status(404).send(
         badRequestMessage({
           messages: [
             {
               field: "photoId",
-              message: "Photo Not Found!",
+              message: "Photo Not Found or You don`t have permission to update foto",
             },
           ],
         })
-      );
-    }
+        );
+      }
+
+      if(findPhoto.user.isDeleted) {
+        return res.status(404).send(badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "Tidak dapat menemukan foto yang dikaitkan dengan pengguna."
+            }
+          ]
+        }))
+      }
 
     const title = req.body?.title;
     const description = req.body?.description;
@@ -312,6 +360,7 @@ const updatePhotoById = async (req, res) => {
 
     return res.status(200).send(successMessageWithData(updatePhoto));
   } catch (error) {
+    console.log(error);
     return res.status(500).send(
       badRequestMessage({
         messages: [
