@@ -545,18 +545,13 @@ const updateProfileByIdUser = async (req, res) => {
       });
     }
 
-    const getUserUpdate = await prisma.user.findMany({
+    const getUserUpdate = await prisma.user.findFirst({
       where: {
         id: parseToken.userId,
       },
     });
 
-    const hidePassword = getUserUpdate.map((user) => {
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword;
-    });
-
-    return res.status(200).send(successMessageWithData(hidePassword));
+    return res.status(200).send(successMessageWithData(getUserUpdate));
   } catch (error) {
     console.log(error);
     return res.status(500).send(
