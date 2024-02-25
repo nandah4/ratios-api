@@ -132,7 +132,11 @@ const getPhotoById = async (req, res) => {
             }
           }
         },
-        albums: true,
+        albums: {
+          where: {
+            isDeleted: false
+          }
+        },
       }
     });
     
