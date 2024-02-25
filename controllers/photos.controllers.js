@@ -134,7 +134,8 @@ const getPhotoById = async (req, res) => {
         },
         albums: {
           where: {
-            isDeleted: false
+            isDeleted: false,
+            userId: parseToken.userId
           }
         },
       }

@@ -126,7 +126,11 @@ const getAllPhotoController = async (req, res) => {
       );
     }
 
-    const allPhoto = await prisma.photo.findMany({});
+    const allPhoto = await prisma.photo.findMany({
+      include: {
+        user: true
+      }
+    });
 
     return res.status(200).send(successMessageWithData(allPhoto));
   } catch (error) {
