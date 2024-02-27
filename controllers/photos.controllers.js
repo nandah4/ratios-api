@@ -25,7 +25,7 @@ const getPhoto = async (req, res) => {
             fullName: true,
             email: true,
             photoUrl: true,
-            isDeleted: true
+            isDeleted: true,
           },
         },
       },
@@ -33,8 +33,8 @@ const getPhoto = async (req, res) => {
 
     if (!query) {
       searchQuery.where.user = {
-        isDeleted: false
-      }
+        isDeleted: false,
+      };
       const photos = await prisma.photo.findMany(searchQuery);
       return res.status(200).send(successMessageWithData(photos));
     } else {
@@ -51,7 +51,7 @@ const getPhoto = async (req, res) => {
         },
       ];
       searchQuery.where.user = {
-        isDeleted: false
+        isDeleted: false,
       };
       const photos = await prisma.photo.findMany(searchQuery);
       return res.status(200).send(successMessageWithData(photos));
@@ -97,15 +97,15 @@ const getPhotoById = async (req, res) => {
             fullName: true,
             email: true,
             photoUrl: true,
-            isDeleted: true
+            isDeleted: true,
           },
         },
         comentars: {
           where: {
             isDeleted: false,
             user: {
-              isDeleted: false
-            }
+              isDeleted: false,
+            },
           },
           select: {
             id: true,
@@ -128,19 +128,19 @@ const getPhotoById = async (req, res) => {
         likes: {
           where: {
             user: {
-              isDeleted: false
-            }
-          }
+              isDeleted: false,
+            },
+          },
         },
         albums: {
           where: {
             isDeleted: false,
-            userId: parseToken.userId
-          }
+            userId: parseToken.userId,
+          },
         },
-      }
+      },
     });
-    
+
     if (!photo) {
       return res.status(404).send(
         badRequestMessage({
@@ -166,7 +166,6 @@ const getPhotoById = async (req, res) => {
         })
       );
     }
-    
 
     const isLiked = photo.likes.some((like) => like.userId === parseToken.userId);
     const responseData = {
@@ -281,13 +280,12 @@ const updatePhotoById = async (req, res) => {
       include: {
         user: {
           select: {
-            isDeleted: true
-          }
-        }
-      }
+            isDeleted: true,
+          },
+        },
+      },
     });
 
-    
     if (!findPhoto) {
       return res.status(404).send(
         badRequestMessage({
@@ -298,19 +296,21 @@ const updatePhotoById = async (req, res) => {
             },
           ],
         })
-        );
-      }
+      );
+    }
 
-      if(findPhoto.user.isDeleted) {
-        return res.status(404).send(badRequestMessage({
+    if (findPhoto.user.isDeleted) {
+      return res.status(404).send(
+        badRequestMessage({
           messages: [
             {
               field: "userId",
-              message: "Tidak dapat menemukan foto yang dikaitkan dengan pengguna."
-            }
-          ]
-        }))
-      }
+              message: "Tidak dapat menemukan foto yang dikaitkan dengan pengguna.",
+            },
+          ],
+        })
+      );
+    }
 
     const title = req.body?.title;
     const description = req.body?.description;

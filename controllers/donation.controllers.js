@@ -76,35 +76,37 @@ const checkStatus = async (req, res) => {
 
   const response = {};
 
-  // switch (getStatus.data?.transaction_status) {
-  //   case "capture":
-  //   case "settlement":
-  //     const donation = await prisma.donation.update({
-  //       where: {
-  //         id: orderId,
-  //       },
-  //       data: {
-  //         status: "SUCCESS",
-  //       },
-  //     });
-  //     response.status = donation.status;
-  //     break;
-  //   case "deny":
-  //   case "cancel":
-  //   case "expire":
-  //     const donation = await prisma.donation.update({
-  //       where: {
-  //         id: orderId,
-  //       },
-  //       data: {
-  //         status: "SUCCESS",
-  //       },
-  //     });
-  //     response.status = donation.status;
-  //     break;
-  //   default:
-  //     break;
-  // }
+  switch (getStatus.data?.transaction_status) {
+    case "capture":
+    case "settlement": {
+      const donation = await prisma.donation.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          status: "SUCCESS",
+        },
+      });
+      response.status = donation.status;
+      break;
+    }
+    case "deny":
+    case "cancel":
+    case "expire": {
+      const donation = await prisma.donation.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          status: "SUCCESS",
+        },
+      });
+      response.status = donation.status;
+      break;
+    }
+    default:
+      break;
+  }
 
   return res.send(successMessageWithData(response));
 };

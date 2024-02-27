@@ -293,7 +293,7 @@ const getAllUser = async (req, res) => {
     const getUser = await prisma.user.findMany({
       where: {
         isDeleted: false,
-        role: "USER"
+        role: "USER",
       },
     });
 
@@ -453,16 +453,18 @@ const updateProfileByIdUser = async (req, res) => {
       },
     });
 
-    if(!existingUser) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "userId",
-            message: "user not found"
-          }
-        ],
-      }));
-    };
+    if (!existingUser) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "user not found",
+            },
+          ],
+        })
+      );
+    }
 
     // Validasi batas update username 7 hari
     if (!username || username === existingUser.username) {
@@ -601,7 +603,11 @@ const getAlbumsByUserIdController = async (req, res) => {
         isDeleted: false,
       },
       include: {
-        photos: true,
+        photos: {
+          where: {
+            isDeleted: false,
+          },
+        },
       },
     });
 
@@ -778,7 +784,6 @@ const loginAdminController = async (req, res) => {
   }
 };
 
-
 module.exports = {
   loginController,
   loginAdminController, // admin
@@ -787,5 +792,5 @@ module.exports = {
   getPhotoByIdUser,
   getOtherUser,
   updateProfileByIdUser,
-  getAlbumsByUserIdController, 
+  getAlbumsByUserIdController,
 };
