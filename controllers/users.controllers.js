@@ -103,51 +103,224 @@ async function loginController(req, res) {
 }
 
 // USER/GUEST - register controllers
+// async function registerController(req, res) {
+//   try {
+//     const username = req.body?.username;
+//     const fullname = req.body?.fullname;
+//     const password = req.body?.password;
+//     const confirmPassword = req.body?.confirmPassword;
+//     const email = req.body?.email;
+//     const address = req.body?.address;
+
+//     const error = [];
+
+//     if (!username) {
+//       error.push({
+//         field: "username",
+//         message: "username can not be empty",
+//       });
+//     }
+//     if (!fullname) {
+//       error.push({
+//         field: "fullName",
+//         message: "fullName can not be empty",
+//       });
+//     }
+//     if (!password) {
+//       error.push({
+//         field: "password",
+//         message: "password can not be empty",
+//       });
+//     }
+//     if (!confirmPassword) {
+//       error.push({
+//         field: "confirm password",
+//         message: "confirm password can not be empty",
+//       });
+//     }
+//     if (!email) {
+//       error.push({
+//         field: "email",
+//         message: "email can not be empty",
+//       });
+//     }
+//     if (!address) {
+//       error.push({
+//         field: "addres",
+//         message: "addrres can not be empty",
+//       });
+//     }
+
+//     const passwordRegex = /^.{8,}$/;
+//     if (!passwordRegex.test(password)) {
+//       error.push({
+//         field: "password",
+//         message: "Input password minimum 8 character",
+//       });
+//     }
+
+//     if (error.length !== 0) {
+//       return res.status(400).send(
+//         badRequestMessage({
+//           messages: [...error],
+//         })
+//       );
+//     }
+
+//     const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+//     if (!usernameRegex.test(username)) {
+//       return res.status(400).send(
+//         badRequestMessage({
+//           messages: [
+//             {
+//               field: "username",
+//               message: "Username can only contain letters, numbers, underscores, and hyphens.",
+//             },
+//           ],
+//         })
+//       );
+//     }
+
+//     if (confirmPassword !== password) {
+//       return res.status(400).send(
+//         badRequestMessage({
+//           messages: [
+//             {
+//               field: "Password and confirmation password",
+//               message: "Password and confirmation do not match.",
+//             },
+//           ],
+//         })
+//       );
+//     }
+
+//     const prisma = new PrismaClient();
+
+//     const check = await prisma.user.findMany({
+//       where: {
+//         OR: [
+//           {
+//             username: username,
+//           },
+//           {
+//             email: email,
+//           },
+//         ],
+//       },
+//     });
+
+//     if (check) {
+//       check.map((item) => {
+//         if (item.email === email && item.username === username) {
+//           return res.status(400).send(
+//             badRequestMessage({
+//               messages: [
+//                 {
+//                   field: "email",
+//                   message: "Email address is already in use",
+//                 },
+//                 {
+//                   field: "username",
+//                   message: "Username address is already in use",
+//                 },
+//               ],
+//             })
+//           );
+//         }
+
+//         if (item.email === email) {
+//           return res.status(400).send(
+//             badRequestMessage({
+//               messages: [
+//                 {
+//                   field: "email",
+//                   message: "Email address is already in use",
+//                 },
+//               ],
+//             })
+//           );
+//         }
+
+//         if (item.username === username) {
+//           return res.status(400).send(
+//             badRequestMessage({
+//               messages: [
+//                 {
+//                   field: "username",
+//                   message: "Username address is already in use",
+//                 },
+//               ],
+//             })
+//           );
+//         }
+//       });
+//     }
+
+//     const hashUserPassword = await hashPassword(password);
+
+//     const newUser = await prisma.user.create({
+//       data: {
+//         username: username,
+//         fullName: fullname,
+//         password: hashUserPassword,
+//         email: email,
+//         address: address,
+//         photoUrl: "default-profile.jpeg",
+//       },
+//     });
+
+//     const newUserPassword = { ...newUser };
+//     delete newUserPassword.password;
+
+//     return res.status(200).send(successMessageWithData(newUserPassword));
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).send(
+//       badRequestMessage({
+//         messages: {
+//           message: "Internal server error",
+//         },
+//       })
+//     );
+//   }
+// }
 async function registerController(req, res) {
   try {
-    const username = req.body?.username;
-    const fullname = req.body?.fullname;
-    const password = req.body?.password;
-    const confirmPassword = req.body?.confirmPassword;
-    const email = req.body?.email;
-    const address = req.body?.address;
+    const { username, fullname, password, confirmPassword, email, address } = req.body;
 
     const error = [];
 
+    // Validasi data yang diterima dari request
     if (!username) {
-      error.push({
-        field: "username",
-        message: "username can not be empty",
-      });
+      error.push({ field: "username", message: "Username cannot be empty" });
     }
     if (!fullname) {
-      error.push({
-        field: "fullName",
-        message: "fullName can not be empty",
-      });
+      error.push({ field: "fullname", message: "Fullname cannot be empty" });
     }
     if (!password) {
-      error.push({
-        field: "password",
-        message: "password can not be empty",
-      });
+      error.push({ field: "password", message: "Password cannot be empty" });
     }
     if (!confirmPassword) {
-      error.push({
-        field: "confirm password",
-        message: "confirm password can not be empty",
-      });
+      error.push({ field: "confirmPassword", message: "Confirm password cannot be empty" });
     }
     if (!email) {
-      error.push({
-        field: "email",
-        message: "email can not be empty",
-      });
+      error.push({ field: "email", message: "Email cannot be empty" });
     }
     if (!address) {
+      error.push({ field: "address", message: "Address cannot be empty" });
+    }
+    if (password !== confirmPassword) {
       error.push({
-        field: "addres",
-        message: "addrres can not be empty",
+        field: "confirmPassword",
+        message: "Password and confirm password do not match",
+      });
+    }
+
+    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!usernameRegex.test(username)) {
+      error.push({
+        field: "username",
+        message: "Username can only contain letters, numbers, underscores, and hyphens.",
       });
     }
 
@@ -159,129 +332,47 @@ async function registerController(req, res) {
       });
     }
 
-    if (error.length !== 0) {
-      return res.status(400).send(
-        badRequestMessage({
-          messages: [...error],
-        })
-      );
+    if (error.length > 0) {
+      return res.status(400).send(badRequestMessage({ error }));
     }
 
-    const usernameRegex = /^[a-zA-Z0-9_-]+$/;
-    if (!usernameRegex.test(username)) {
-      return res.status(400).send(
-        badRequestMessage({
-          messages: [
-            {
-              field: "username",
-              message: "Username can only contain letters, numbers, underscores, and hyphens.",
-            },
-          ],
-        })
-      );
-    }
-
-    if (confirmPassword !== password) {
-      return res.status(400).send(
-        badRequestMessage({
-          messages: [
-            {
-              field: "Password and confirmation password",
-              message: "Password and confirmation do not match.",
-            },
-          ],
-        })
-      );
-    }
-
+    // Check if username or email already exists
     const prisma = new PrismaClient();
-
-    const check = await prisma.user.findMany({
+    const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          {
-            username: username,
-          },
-          {
-            email: email,
-          },
-        ],
+        OR: [{ username }, { email }],
       },
     });
 
-    if (check) {
-      check.map((item) => {
-        if (item.email === email && item.username === username) {
-          return res.status(400).send(
-            badRequestMessage({
-              messages: [
-                {
-                  field: "email",
-                  message: "Email address is already in use",
-                },
-                {
-                  field: "username",
-                  message: "Username address is already in use",
-                },
-              ],
-            })
-          );
-        }
-
-        if (item.email === email) {
-          return res.status(400).send(
-            badRequestMessage({
-              messages: [
-                {
-                  field: "email",
-                  message: "Email address is already in use",
-                },
-              ],
-            })
-          );
-        }
-
-        if (item.username === username) {
-          return res.status(400).send(
-            badRequestMessage({
-              messages: [
-                {
-                  field: "username",
-                  message: "Username address is already in use",
-                },
-              ],
-            })
-          );
-        }
-      });
+    if (existingUser) {
+      if (existingUser.username === username) {
+        error.push({ field: "username", message: "Username is already in use" });
+      }
+      if (existingUser.email === email) {
+        error.push({ field: "email", message: "Email is already in use" });
+      }
+      return res.status(400).send(badRequestMessage({ error }));
     }
 
+    // Hash password
     const hashUserPassword = await hashPassword(password);
 
+    // Create new user
     const newUser = await prisma.user.create({
       data: {
-        username: username,
+        username,
         fullName: fullname,
         password: hashUserPassword,
-        email: email,
-        address: address,
-        photoUrl: "default-profile.jpeg",
+        email,
+        address,
+        photoUrl: "default-profile-picture.jpg",
       },
     });
 
-    const newUserPassword = { ...newUser };
-    delete newUserPassword.password;
-
-    return res.status(200).send(successMessageWithData(newUserPassword));
+    return res.status(200).send(successMessageWithData(newUser));
   } catch (error) {
-    console.log(error);
-    return res.status(500).send(
-      badRequestMessage({
-        messages: {
-          message: "Internal server error",
-        },
-      })
-    );
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 

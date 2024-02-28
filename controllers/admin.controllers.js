@@ -1,12 +1,14 @@
 const { PrismaClient } = require("@prisma/client");
 const { verifyJwt } = require("../utils/jwt");
 const { successMessageWithData, badRequestMessage } = require("../utils/message");
+const { Extensions } = require("@prisma/client/runtime/library");
 
 const prisma = new PrismaClient();
 
 // ADMIN - getAllUser
 const getAllUserController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
+  const { users } = req.query;
 
   try {
     const admin = await prisma.user.findUnique({
@@ -29,13 +31,103 @@ const getAllUserController = async (req, res) => {
       );
     }
 
-    const getAllUser = await prisma.user.findMany({
+    let getAllUser;
+    if (users) {
+      getAllUser = await prisma.user.findMany({
+        where: {
+          role: "USER",
+          OR: [
+            {
+              username: {
+                contains: users,
+              },
+            },
+            {
+              fullName: {
+                contains: users,
+              },
+            },
+          ],
+        },
+        orderBy: {
+          isDeleted: "asc",
+        },
+      });
+    } else {
+      getAllUser = await prisma.user.findMany({
+        where: {
+          role: 'USER',
+        },
+        orderBy: {
+          isDeleted: 'asc'
+        }
+      })
+    }
+    return res.status(200).send(successMessageWithData(getAllUser));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// ADMIN - Detail User
+const detailUserByAdminController = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const { userId } = req.params;
+
+  try {
+    const admin = await prisma.user.findUnique({
       where: {
-        role: "USER",
+        id: parseToken.userId,
+        role: "ADMIN",
       },
     });
 
-    return res.status(200).send(successMessageWithData(getAllUser));
+    if (!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId or role",
+              message: "You don`t have permission to access this resource",
+            },
+          ],
+        })
+      );
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        role: "USER",
+      },
+      include: {
+        _count: {
+          select: {
+            photos: true,
+            albums: true,
+            followers: true,
+            following: true,
+            likes: true,
+            comentars: true,
+          },
+        },
+      },
+    });
+
+    if (!existingUser) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "User not found",
+            },
+          ],
+        })
+      );
+    }
+
+    return res.status(200).send(successMessageWithData(existingUser));
   } catch (error) {
     console.log(error);
   }
@@ -59,6 +151,7 @@ const deleteUserController = async (req, res) => {
         badRequestMessage({
           messages: [
             {
+              field: "role",
               message: "You don`t have permission to access this resource",
             },
           ],
@@ -127,12 +220,83 @@ const getAllPhotoController = async (req, res) => {
     }
 
     const allPhoto = await prisma.photo.findMany({
+      where: {
+        user: {
+          role: "USER",
+        },
+      },
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
 
     return res.status(200).send(successMessageWithData(allPhoto));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// ADMIN - GET DETAIL PHOTO
+const detailPhotoByAdminController = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const { photoId } = req.params;
+
+  try {
+    const admin = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        role: "ADMIN",
+      },
+    });
+
+    if (!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId and role",
+              message: "You don`t have access this resource",
+            },
+          ],
+        })
+      );
+    }
+
+    const existingPhoto = await prisma.photo.findFirst({
+      where: {
+        id: photoId,
+        user: {
+          role: "USER",
+        },
+      },
+    });
+
+    if (!existingPhoto) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "photoId",
+              message: "Foto not found",
+            },
+          ],
+        })
+      );
+    }
+
+    const photo = await prisma.photo.findFirst({
+      where: {
+        id: photoId,
+      },
+      include: {
+        user: true,
+        albums: true,
+        likes: true,
+        comentars: true,
+      },
+    });
+
+    return res.status(200).send(successMessageWithData(photo));
   } catch (error) {
     console.log(error);
   }
@@ -172,9 +336,82 @@ const deletePhotoController = async (req, res) => {
         isDeleted: true,
       },
     });
+
+    return res.status(200).send(successMessageWithData(deletePhoto));
   } catch (error) {
     console.log(error);
   }
 };
 
-module.exports = { getAllUserController, deleteUserController, getAllPhotoController, deletePhotoController };
+// ADMIN - DELETE COMENTAR
+const deleteComentarByAdminController = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+  const { comentarId } = req.params;
+
+  try {
+    const admin = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        role: "ADMIN",
+      },
+    });
+
+    if (!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId or role",
+              message: "You don`t have access this resouerce",
+            },
+          ],
+        })
+      );
+    }
+
+    const existingComentar = await prisma.comentar.findFirst({
+      where: {
+        id: comentarId,
+        user: {
+          role: "USER",
+        },
+      },
+    });
+
+    if (!existingComentar) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "comentarId",
+              message: "Comentar not found",
+            },
+          ],
+        })
+      );
+    }
+
+    const deleteComentar = await prisma.comentar.update({
+      where: {
+        id: comentarId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    return res.status(200).send(successMessageWithData(deleteComentar));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = {
+  getAllUserController,
+  detailUserByAdminController,
+  deleteUserController,
+  getAllPhotoController,
+  detailPhotoByAdminController,
+  deletePhotoController,
+  deleteComentarByAdminController,
+};
