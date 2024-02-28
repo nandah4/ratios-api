@@ -58,6 +58,17 @@ async function loginController(req, res) {
       );
     }
 
+    if(user.isDeleted) {
+      return res.status(403).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId",
+            message: "Account not found"
+          }
+        ]
+      }))
+    }
+
     const isPasswordValid = await matchPassword(password, user.password);
     if (!isPasswordValid) {
       return res.status(400).send(
@@ -83,6 +94,7 @@ async function loginController(req, res) {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         role: user.role,
+        isDeleted: user.isDeleted
       },
       token: signJwt(user.id),
     };
