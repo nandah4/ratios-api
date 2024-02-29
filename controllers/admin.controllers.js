@@ -2,13 +2,14 @@ const { PrismaClient } = require("@prisma/client");
 const { verifyJwt } = require("../utils/jwt");
 const { successMessageWithData, badRequestMessage } = require("../utils/message");
 const { Extensions } = require("@prisma/client/runtime/library");
+const { response } = require("express");
 
 const prisma = new PrismaClient();
 
 // ADMIN - getAllUser
 const getAllUserController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
-  const { users } = req.query;
+  const { users, currentPage = 1 } = req.query;
 
   try {
     const admin = await prisma.user.findUnique({
@@ -31,7 +32,30 @@ const getAllUserController = async (req, res) => {
       );
     }
 
+    const per_page = 2;
+    const offset = (currentPage - 1) * per_page;
+
+    const total_user = await prisma.user.count({
+      where: {
+        role: 'USER'
+      }
+    })
+
+    const total_page = Math.ceil(total_user / per_page);
+
+    if(currentPage > total_page) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "currentPage",
+            message: "Page not fond"
+          }
+        ]
+      }))
+    }
+
     let getAllUser;
+    if(currentPage > 0){
     if (users) {
       getAllUser = await prisma.user.findMany({
         where: {
@@ -49,6 +73,9 @@ const getAllUserController = async (req, res) => {
             },
           ],
         },
+  
+        skip: offset,
+        take: per_page,
         orderBy: {
           isDeleted: "asc",
         },
@@ -56,14 +83,35 @@ const getAllUserController = async (req, res) => {
     } else {
       getAllUser = await prisma.user.findMany({
         where: {
-          role: 'USER',
+          role: "USER",
         },
+        skip: offset,
+        take: per_page,
         orderBy: {
-          isDeleted: 'asc'
-        }
-      })
+          isDeleted: "asc",
+        },
+      });
+      }} else {
+        return res.status(404).send(
+          badRequestMessage({
+            messages: [
+              {
+                field: "currentPage",
+                message: "Page not found",
+              },
+            ],
+          }));
+      }
+
+    const responseData = {
+      page: currentPage,
+      per_page: per_page,
+      total_user: total_user,
+      total_page: total_page,
+      ...getAllUser,
     }
-    return res.status(200).send(successMessageWithData(getAllUser));
+
+    return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
   }
