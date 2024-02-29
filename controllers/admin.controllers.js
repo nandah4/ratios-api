@@ -32,84 +32,101 @@ const getAllUserController = async (req, res) => {
       );
     }
 
-    const per_page = 15;
+    const per_page = parseInt(req.query.page);
     const offset = (currentPage - 1) * per_page;
 
     const total_user = await prisma.user.count({
       where: {
-        role: 'USER'
-      }
-    })
+        role: "USER",
+      },
+    });
 
     const total_page = Math.ceil(total_user / per_page);
 
-    if(currentPage > total_page) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "currentPage",
-            message: "Page not fond"
-          }
-        ]
-      }))
+    if (!per_page || currentPage > total_page) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "currentPage",
+              message: "Page not fond",
+            },
+          ],
+        })
+      );
     }
 
     let getAllUser;
-    if(currentPage > 0){
-    if (users) {
-      getAllUser = await prisma.user.findMany({
-        where: {
-          role: "USER",
-          OR: [
-            {
-              username: {
-                contains: users,
-              },
-            },
-            {
-              fullName: {
-                contains: users,
-              },
-            },
-          ],
-        },
-  
-        skip: offset,
-        take: per_page,
-        orderBy: {
-          isDeleted: "asc",
-        },
-      });
-    } else {
-      getAllUser = await prisma.user.findMany({
-        where: {
-          role: "USER",
-        },
-        skip: offset,
-        take: per_page,
-        orderBy: {
-          isDeleted: "asc",
-        },
-      });
-      }} else {
-        return res.status(404).send(
-          badRequestMessage({
-            messages: [
+    if (currentPage > 0) {
+      if (users) {
+        getAllUser = await prisma.user.findMany({
+          where: {
+            role: "USER",
+            OR: [
               {
-                field: "currentPage",
-                message: "Page not found",
+                username: {
+                  contains: users,
+                },
+              },
+              {
+                fullName: {
+                  contains: users,
+                },
               },
             ],
-          }));
+          },
+
+          skip: offset,
+          take: per_page,
+          orderBy: {
+            isDeleted: "asc",
+          },
+        });
+      } else {
+        getAllUser = await prisma.user.findMany({
+          where: {
+            role: "USER",
+          },
+          skip: offset,
+          take: per_page,
+          orderBy: {
+            isDeleted: "asc",
+          },
+        });
       }
+    } else {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "currentPage",
+              message: "Page not found",
+            },
+          ],
+        })
+      );
+    }
 
     const responseData = {
       page: currentPage,
       per_page: per_page,
       total_user: total_user,
       total_page: total_page,
-      ...getAllUser,
-    }
+      data: getAllUser.map(user => ({
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName,
+        password: user.password,
+        photoUrl: user.photoUrl,
+        email: user.email,
+        address: user.address,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        isDeleted: user.isDeleted,
+        role: user.role
+      }))
+    };
+    
 
     return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
@@ -245,6 +262,7 @@ const deleteUserController = async (req, res) => {
 // ADMIN - GET ALL FOTO
 const getAllPhotoController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
+  const { photos, currentPage = 1 } = req.query;
 
   try {
     const admin = await prisma.user.findUnique({
@@ -267,6 +285,52 @@ const getAllPhotoController = async (req, res) => {
       );
     }
 
+    const per_page = 15;
+    const offset = (currentPage - 1) * per_page;
+
+    const total_photo = await prisma.photo.count({
+      where: {
+        user: {
+          role: "USER",
+        },
+      },
+    });
+
+    const total_page = Math.ceil(total_photo / per_page);
+
+    if (currentPage > total_page) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "currentPage",
+              message: "Page not found",
+            },
+          ],
+        })
+      );
+    }
+
+    let getAllPhoto;
+
+    if (currentPage > 0) {
+      if (photos) {
+        getAllPhoto = await prisma.photo.findMany({
+          where: {
+            user: {
+              role: "USER",
+            },
+            OR: [
+              {
+                title: {
+                  contain,
+                },
+              },
+            ],
+          },
+        });
+      }
+    }
     const allPhoto = await prisma.photo.findMany({
       where: {
         user: {
