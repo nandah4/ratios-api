@@ -285,7 +285,7 @@ const getAllPhotoController = async (req, res) => {
       );
     }
 
-    const per_page = 15;
+    const per_page = parseInt(req.query.page);
     const offset = (currentPage - 1) * per_page;
 
     const total_photo = await prisma.photo.count({
@@ -298,7 +298,7 @@ const getAllPhotoController = async (req, res) => {
 
     const total_page = Math.ceil(total_photo / per_page);
 
-    if (currentPage > total_page) {
+    if (!per_page || currentPage > total_page) {
       return res.status(404).send(
         badRequestMessage({
           messages: [
@@ -323,26 +323,66 @@ const getAllPhotoController = async (req, res) => {
             OR: [
               {
                 title: {
-                  contain,
+                  contain: photos,
                 },
               },
+              {
+                description: {
+                  contains: photos,
+                },
+              }
             ],
           },
-        });
-      }
-    }
-    const allPhoto = await prisma.photo.findMany({
-      where: {
-        user: {
-          role: "USER",
-        },
-      },
-      include: {
-        user: true,
-      },
-    });
 
-    return res.status(200).send(successMessageWithData(allPhoto));
+          skip: offset,
+          take: per_page,
+          orderBy: {
+            createdAt: 'desc',
+          }
+        });
+      } else {
+        getAllPhoto = await prisma.photo.findMany({
+          where: {
+            user: {
+              role: 'USER'
+            },
+          },
+          skip: offset,
+          take: per_page,
+          orderBy: {
+            createdAt: 'desc'
+          }
+        })
+      }
+    } else {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "currentPage",
+            message: "Page not found"
+          }
+        ]
+      }))
+    }
+
+    const responseData = {
+      page: currentPage,
+      per_page: per_page,
+      total_user: total_photo,
+      total_page: total_page,
+      data: getAllPhoto.map(photo => ({
+        id: photo.id,
+        userId: photo.userId,
+        title: photo.title,
+        description: photo.description,
+        locationFile: photo.locationFile,
+        createdAt: photo.createdAt,
+        updatedAt: photo.updatedAt,
+        isDeleted: photo.isDeleted,
+      }))
+    };
+
+    return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
   }
