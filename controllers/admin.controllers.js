@@ -32,7 +32,7 @@ const getAllUserController = async (req, res) => {
       );
     }
 
-    const per_page = 2;
+    const per_page = 15;
     const offset = (currentPage - 1) * per_page;
 
     const total_user = await prisma.user.count({
