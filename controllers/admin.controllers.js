@@ -710,7 +710,7 @@ const deletePhotoController = async (req, res) => {
       );
     }
 
-    const deletePhoto = await prisma.photo.findFirst({
+    const deletePhoto = await prisma.photo.update({
       where: {
         id: photoId,
       },

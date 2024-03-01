@@ -410,7 +410,6 @@ const getAllUser = async (req, res) => {
             username: {
               contains: search,
             }
-
           },
           {
             fullName: {
