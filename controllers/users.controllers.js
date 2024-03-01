@@ -58,15 +58,17 @@ async function loginController(req, res) {
       );
     }
 
-    if(user.isDeleted) {
-      return res.status(403).send(badRequestMessage({
-        messages: [
-          {
-            field: "userId",
-            message: "Account not found"
-          }
-        ]
-      }))
+    if (user.isDeleted) {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "Account not found",
+            },
+          ],
+        })
+      );
     }
 
     const isPasswordValid = await matchPassword(password, user.password);
@@ -94,7 +96,7 @@ async function loginController(req, res) {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         role: user.role,
-        isDeleted: user.isDeleted
+        isDeleted: user.isDeleted,
       },
       token: signJwt(user.id),
     };
@@ -392,12 +394,32 @@ async function registerController(req, res) {
 const getAllUser = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
 
+  const { search } = req.query;
+
   try {
     const getUser = await prisma.user.findMany({
       where: {
         isDeleted: false,
         role: "USER",
+        OR: search
+        ? [
+          {
+            username: {
+              contains: search,
+            }
+
+          },
+          {
+            fullName: {
+              contains: search,
+            }
+          }
+        ]
+        : undefined,
       },
+      orderBy: {
+        createdAt: "desc"
+      }
     });
 
     if (!getUser) {
