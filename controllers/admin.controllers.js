@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // ADMIN - getAllUser
 const getAllUserController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
-  const { users, currentPage = 1 } = req.query;
+  const { currentPage = 1, isDeleted = "false" } = req.query;
 
   try {
     const admin = await prisma.user.findUnique({
@@ -35,100 +35,157 @@ const getAllUserController = async (req, res) => {
     const per_page = parseInt(req.query.page);
     const offset = (currentPage - 1) * per_page;
 
-    const total_user = await prisma.user.count({
+    const total_user_active = await prisma.user.count({
       where: {
         role: "USER",
+        isDeleted: false,
       },
     });
 
-    const total_page = Math.ceil(total_user / per_page);
-
-    if (!per_page || currentPage > total_page) {
-      return res.status(404).send(
-        badRequestMessage({
-          messages: [
-            {
-              field: "currentPage",
-              message: "Page not fond",
-            },
-          ],
-        })
-      );
-    }
+    const total_page = Math.ceil(total_user_active / per_page);
 
     let getAllUser;
-    if (currentPage > 0) {
-      if (users) {
-        getAllUser = await prisma.user.findMany({
-          where: {
-            role: "USER",
-            OR: [
-              {
-                username: {
-                  contains: users,
-                },
-              },
-              {
-                fullName: {
-                  contains: users,
-                },
-              },
-            ],
-          },
+    if (!currentPage || !per_page || !isDeleted) {
+      getAllUser = await prisma.user.findMany({
+        where: {
+          role: "USER",
+          isDeleted: false,
+        },
+        take: 8,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-          skip: offset,
-          take: per_page,
-          orderBy: {
-            isDeleted: "asc",
-          },
-        });
-      } else {
-        getAllUser = await prisma.user.findMany({
-          where: {
-            role: "USER",
-          },
-          skip: offset,
-          take: per_page,
-          orderBy: {
-            isDeleted: "asc",
-          },
-        });
-      }
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_user_active: total_user_active,
+        total_page: total_page,
+        data: getAllUser.map((user) => ({
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName,
+          password: user.password,
+          photoUrl: user.photoUrl,
+          email: user.email,
+          address: user.address,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          isDeleted: user.isDeleted,
+          role: user.role,
+        })),
+      };
+
+      return res.status(200).send(successMessageWithData(responseData));
+    } else if (isDeleted === "false") {
+      getAllUser = await prisma.user.findMany({
+        where: {
+          role: "USER",
+          isDeleted: false,
+        },
+        skip: offset,
+        take: per_page,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_user_active: total_user_active,
+        total_page: total_page,
+        data: getAllUser.map((user) => ({
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName,
+          password: user.password,
+          photoUrl: user.photoUrl,
+          email: user.email,
+          address: user.address,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          isDeleted: user.isDeleted,
+          role: user.role,
+        })),
+      };
+
+      return res.status(200).send(successMessageWithData(responseData));
+    } else if (isDeleted === "true") {
+      getAllUser = await prisma.user.findMany({
+        where: {
+          role: "USER",
+          isDeleted: true,
+        },
+        skip: offset,
+        take: per_page,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const total_user_deleted = await prisma.user.count({
+        where: {
+          role: "USER",
+          isDeleted: true,
+        },
+      });
+
+      const total_page = Math.ceil(total_user_deleted / per_page);
+
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_user_deleted: total_user_deleted,
+        total_page: total_page,
+        data: getAllUser.map((user) => ({
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName,
+          password: user.password,
+          photoUrl: user.photoUrl,
+          email: user.email,
+          address: user.address,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          isDeleted: user.isDeleted,
+          role: user.role,
+        })),
+      };
+      return res.status(200).send(successMessageWithData(responseData));
     } else {
-      return res.status(404).send(
-        badRequestMessage({
-          messages: [
-            {
-              field: "currentPage",
-              message: "Page not found",
-            },
-          ],
-        })
-      );
+      getAllUser = await prisma.user.findMany({
+        where: {
+          role: "USER",
+        },
+        take: 8,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_user_active: total_user_active,
+        total_page: total_page,
+        data: getAllUser.map((user) => ({
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName,
+          password: user.password,
+          photoUrl: user.photoUrl,
+          email: user.email,
+          address: user.address,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          isDeleted: user.isDeleted,
+          role: user.role,
+        })),
+      };
+      return res.status(200).send(successMessageWithData(responseData));
     }
-
-    const responseData = {
-      page: currentPage,
-      per_page: per_page,
-      total_user: total_user,
-      total_page: total_page,
-      data: getAllUser.map(user => ({
-        id: user.id,
-        username: user.username,
-        fullName: user.fullName,
-        password: user.password,
-        photoUrl: user.photoUrl,
-        email: user.email,
-        address: user.address,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        isDeleted: user.isDeleted,
-        role: user.role
-      }))
-    };
-    
-
-    return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
   }
@@ -262,7 +319,7 @@ const deleteUserController = async (req, res) => {
 // ADMIN - GET ALL FOTO
 const getAllPhotoController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
-  const { photos, currentPage = 1 } = req.query;
+  const { currentPage = 1, isDeleted = "false" } = req.query;
 
   try {
     const admin = await prisma.user.findUnique({
@@ -288,101 +345,130 @@ const getAllPhotoController = async (req, res) => {
     const per_page = parseInt(req.query.page);
     const offset = (currentPage - 1) * per_page;
 
-    const total_photo = await prisma.photo.count({
+    const total_photo_active = await prisma.photo.count({
       where: {
         user: {
           role: "USER",
+          isDeleted: false,
         },
       },
     });
 
-    const total_page = Math.ceil(total_photo / per_page);
-
-    if (!per_page || currentPage > total_page) {
-      return res.status(404).send(
-        badRequestMessage({
-          messages: [
-            {
-              field: "currentPage",
-              message: "Page not found",
-            },
-          ],
-        })
-      );
-    }
+    const total_page = Math.ceil(total_photo_active / per_page);
 
     let getAllPhoto;
-
-    if (currentPage > 0) {
-      if (photos) {
-        getAllPhoto = await prisma.photo.findMany({
-          where: {
-            user: {
-              role: "USER",
-            },
-            OR: [
-              {
-                title: {
-                  contain: photos,
-                },
-              },
-              {
-                description: {
-                  contains: photos,
-                },
-              }
-            ],
+    if (!per_page || !currentPage || !isDeleted) {
+      getAllPhoto = await prisma.photo.findMany({
+        where: {
+          user: {
+            role: "USER",
           },
+        },
+        include: {
+          user: true,
+        },
+        take: 8,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_photo_active: total_photo_active,
+        total_page: total_page,
+        data: [...getAllPhoto],
+      };
 
-          skip: offset,
-          take: per_page,
-          orderBy: {
-            createdAt: 'desc',
-          }
-        });
-      } else {
-        getAllPhoto = await prisma.photo.findMany({
-          where: {
-            user: {
-              role: 'USER'
-            },
+      return res.status(200).send(successMessageWithData(responseData));
+    } else if (isDeleted === "false") {
+      getAllPhoto = await prisma.photo.findMany({
+        where: {
+          isDeleted: false,
+          user: {
+            role: "USER",    
           },
-          skip: offset,
-          take: per_page,
-          orderBy: {
-            createdAt: 'desc'
-          }
-        })
-      }
+        },
+        include: {
+          user: true,
+        },
+        skip: offset,
+        take: per_page,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_photo_active: total_photo_active,
+        total_page: total_page,
+        data: [...getAllPhoto],
+      };
+
+      return res.status(200).send(successMessageWithData(responseData));
+    } else if (isDeleted === 'true') {
+      getAllPhoto = await prisma.photo.findMany({
+        where: {
+          isDeleted: true,
+          user: {
+            role: "USER",
+          },
+        },
+        include: {
+          user: true
+        },
+        skip: offset,
+        take: per_page,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const total_photo_deleted = await prisma.photo.count({
+        where: {
+          user: {
+            role: "USER",
+            isDeleted: true,
+          },
+        },
+      });
+  
+      const total_page = Math.ceil(total_photo_deleted / per_page);
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_photo_deleted: total_photo_deleted,
+        total_page: total_page,
+        data : [...getAllPhoto]
+      };
+
+      return res.status(200).send(successMessageWithData(responseData))
     } else {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "currentPage",
-            message: "Page not found"
-          }
-        ]
-      }))
+      getAllPhoto = await prisma.photo.findMany({
+        where: {
+          user: {
+            role: "USER",
+          },
+        },
+        include: {
+          user: true,
+        },
+        take: 8,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_photo_active: total_photo_active,
+        total_page: total_page,
+        data: [...getAllPhoto],
+      };
+
+      return res.status(200).send(successMessageWithData(responseData));
     }
-
-    const responseData = {
-      page: currentPage,
-      per_page: per_page,
-      total_user: total_photo,
-      total_page: total_page,
-      data: getAllPhoto.map(photo => ({
-        id: photo.id,
-        userId: photo.userId,
-        title: photo.title,
-        description: photo.description,
-        locationFile: photo.locationFile,
-        createdAt: photo.createdAt,
-        updatedAt: photo.updatedAt,
-        isDeleted: photo.isDeleted,
-      }))
-    };
-
-    return res.status(200).send(successMessageWithData(responseData));
   } catch (error) {
     console.log(error);
   }
