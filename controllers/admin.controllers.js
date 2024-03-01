@@ -200,7 +200,6 @@ const getAllUserController = async (req, res) => {
     console.log(error);
   }
 };
-
 // ADMIN - Detail User
 const detailUserByAdminController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -264,7 +263,6 @@ const detailUserByAdminController = async (req, res) => {
     console.log(error);
   }
 };
-
 // ADMIN - deleteUser
 const deleteUserController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -323,6 +321,73 @@ const deleteUserController = async (req, res) => {
     return res.status(200).send(successMessageWithData(deleteUser));
   } catch (error) {
     console.log(error);
+  }
+};
+// ADMIN - updateIsdeletedUser
+const updateIsdeletedUser = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+
+  const { userId } = req.params;
+
+  try {
+    const admin = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        role: "ADMIN",
+      },
+    });
+
+    if (!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId or role",
+              message: "You don`t have access this resource",
+            },
+          ],
+        })
+      );
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        role: "USER",
+      },
+    });
+
+    if (!existingUser) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId",
+              message: "User not found",
+            },
+          ],
+        })
+      );
+    }
+
+    const userUpdate = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    return res.status(200).send(successMessageWithData(userUpdate));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send(
+      badRequestMessage({
+        messages:
+          "Internal Server Error. Don't worry, our team is on it! In the meantime, you might want to refresh the page or come back later.",
+      })
+    );
   }
 };
 
@@ -405,7 +470,7 @@ const getAllPhotoController = async (req, res) => {
         where: {
           isDeleted: false,
           user: {
-            role: "USER",    
+            role: "USER",
           },
         },
         include: {
@@ -427,7 +492,7 @@ const getAllPhotoController = async (req, res) => {
       };
 
       return res.status(200).send(successMessageWithData(responseData));
-    } else if (isDeleted === 'true') {
+    } else if (isDeleted === "true") {
       getAllPhoto = await prisma.photo.findMany({
         where: {
           isDeleted: true,
@@ -436,7 +501,7 @@ const getAllPhotoController = async (req, res) => {
           },
         },
         include: {
-          user: true
+          user: true,
         },
         skip: offset,
         take: per_page,
@@ -447,13 +512,13 @@ const getAllPhotoController = async (req, res) => {
 
       const total_photo_deleted = await prisma.photo.count({
         where: {
+          isDeleted: true,
           user: {
             role: "USER",
-            isDeleted: true,
           },
         },
       });
-  
+
       const total_page = Math.ceil(total_photo_deleted / per_page);
       const responseData = {
         page: currentPage,
@@ -461,10 +526,10 @@ const getAllPhotoController = async (req, res) => {
         total_photo_deleted: total_photo_deleted,
         total_photo: total_photo,
         total_page: total_page,
-        data : [...getAllPhoto]
+        data: [...getAllPhoto],
       };
 
-      return res.status(200).send(successMessageWithData(responseData))
+      return res.status(200).send(successMessageWithData(responseData));
     } else {
       getAllPhoto = await prisma.photo.findMany({
         where: {
@@ -666,12 +731,76 @@ const deleteComentarByAdminController = async (req, res) => {
   }
 };
 
+// ADMIN - UPDATE IS DELETED
+const updatePhotoIsDeleted = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+
+  const { photoId } = req.params;
+
+  try {
+    const admin = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        role: "ADMIN",
+      },
+    });
+
+    if (!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "userId or role",
+              message: "You don`t have access this resouerce",
+            },
+          ],
+        })
+      );
+    }
+
+    const existingPhoto = await prisma.photo.findFirst({
+      where: {
+        id: photoId,
+      }
+    });
+
+    if(!existingPhoto) {
+      return res.status(404).send(badRequestMessage({
+        messages: [
+          {
+            field: "photoId",
+            message: "Foto not found"
+          }
+        ]
+      }))
+    };
+
+    const updatePhoto = await prisma.photo.update({
+      where: {
+        id: photoId
+      },
+      data: {
+        isDeleted: false,
+      },
+    });
+
+    return res.status(200).send(successMessageWithData(updatePhoto))
+  } catch (error) {
+    console.log(error)
+    return res.status(500).send(badRequestMessage({
+      messages: "Internal Server Error",
+    }));
+  };
+};
+
 module.exports = {
   getAllUserController,
   detailUserByAdminController,
   deleteUserController,
+  updateIsdeletedUser,
   getAllPhotoController,
   detailPhotoByAdminController,
   deletePhotoController,
   deleteComentarByAdminController,
+  updatePhotoIsDeleted
 };
