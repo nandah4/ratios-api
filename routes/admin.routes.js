@@ -12,15 +12,15 @@ const {
 
 const adminRoutes = express.Router();
 
-// Admin manage user 
+// Admin manage user
 adminRoutes.get("/users", authMiddlewareAdmin, getAllUserController);
-adminRoutes.get("/:userId/users", authMiddlewareAdmin, detailUserByAdminController);
-adminRoutes.delete("/:userId/users", authMiddlewareAdmin, deleteUserController);
+adminRoutes.get("/users/:userId", authMiddlewareAdmin, detailUserByAdminController);
+adminRoutes.delete("/users/:userId/", authMiddlewareAdmin, deleteUserController);
 // Admin manage photo
 adminRoutes.get("/photos", authMiddlewareAdmin, getAllPhotoController);
-adminRoutes.get("/:photoId/photos", authMiddlewareAdmin, detailPhotoByAdminController);
-adminRoutes.delete("/:photoId/photos", authMiddlewareAdmin, deletePhotoController);
+adminRoutes.get("/photos/:photoId", authMiddlewareAdmin, detailPhotoByAdminController);
+adminRoutes.delete("/photos/:photoId", authMiddlewareAdmin, deletePhotoController);
 
-adminRoutes.delete("/:comentarId/comentars",authMiddlewareAdmin, deleteComentarByAdminController);
+adminRoutes.delete("/:comentarId/comentars", authMiddlewareAdmin, deleteComentarByAdminController);
 
 module.exports = { adminRoutes };
