@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // ADMIN - getAllUser
 const getAllUserController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
-  const { currentPage = 1, isDeleted = "false" } = req.query;
+  const { currentPage = 1, isDeleted = "false", search } = req.query;
 
   try {
     const admin = await prisma.user.findUnique({
@@ -67,8 +67,8 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_active: total_user_active,
-        total_user: total_user,
-        total_page: total_page,
+        total_all_user: total_user,
+        total_all_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
           username: user.username,
@@ -90,6 +90,20 @@ const getAllUserController = async (req, res) => {
         where: {
           role: "USER",
           isDeleted: false,
+          OR: search
+            ? [
+                {
+                  username: {
+                    contains: search,
+                  },
+                },
+                {
+                  fullName: {
+                    contains: search,
+                  },
+                },
+              ]
+            : undefined,
         },
         skip: offset,
         take: per_page,
@@ -102,8 +116,8 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_active: total_user_active,
-        total_user: total_user,
-        total_page: total_page,
+        total_all_user: total_user,
+        total_all_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
           username: user.username,
@@ -125,6 +139,20 @@ const getAllUserController = async (req, res) => {
         where: {
           role: "USER",
           isDeleted: true,
+          OR: search
+            ? [
+                {
+                  username: {
+                    contains: search,
+                  },
+                },
+                {
+                  fullName: {
+                    contains: search,
+                  },
+                },
+              ]
+            : undefined,
         },
         skip: offset,
         take: per_page,
@@ -146,8 +174,8 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_deleted: total_user_deleted,
-        total_user: total_user,
-        total_page: total_page,
+        total_all_user: total_user,
+        total_all_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
           username: user.username,
@@ -178,8 +206,8 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_active: total_user_active,
-        total_user: total_user,
-        total_page: total_page,
+        total_all_user: total_user,
+        total_all_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
           username: user.username,
@@ -200,6 +228,8 @@ const getAllUserController = async (req, res) => {
     console.log(error);
   }
 };
+
+
 // ADMIN - Detail User
 const detailUserByAdminController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -761,36 +791,40 @@ const updatePhotoIsDeleted = async (req, res) => {
     const existingPhoto = await prisma.photo.findFirst({
       where: {
         id: photoId,
-      }
+      },
     });
 
-    if(!existingPhoto) {
-      return res.status(404).send(badRequestMessage({
-        messages: [
-          {
-            field: "photoId",
-            message: "Foto not found"
-          }
-        ]
-      }))
-    };
+    if (!existingPhoto) {
+      return res.status(404).send(
+        badRequestMessage({
+          messages: [
+            {
+              field: "photoId",
+              message: "Foto not found",
+            },
+          ],
+        })
+      );
+    }
 
     const updatePhoto = await prisma.photo.update({
       where: {
-        id: photoId
+        id: photoId,
       },
       data: {
         isDeleted: false,
       },
     });
 
-    return res.status(200).send(successMessageWithData(updatePhoto))
+    return res.status(200).send(successMessageWithData(updatePhoto));
   } catch (error) {
-    console.log(error)
-    return res.status(500).send(badRequestMessage({
-      messages: "Internal Server Error",
-    }));
-  };
+    console.log(error);
+    return res.status(500).send(
+      badRequestMessage({
+        messages: "Internal Server Error",
+      })
+    );
+  }
 };
 
 module.exports = {
@@ -802,5 +836,5 @@ module.exports = {
   detailPhotoByAdminController,
   deletePhotoController,
   deleteComentarByAdminController,
-  updatePhotoIsDeleted
+  updatePhotoIsDeleted,
 };
