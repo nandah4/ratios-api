@@ -417,22 +417,6 @@ const deletePhotoById = async (req, res) => {
       );
     }
 
-    // isDeleted to true to assocciated comments
-    await prisma.comentar.updateMany({
-      where: {
-        photoId: photoId,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-
-    await prisma.like.deleteMany({
-      where: {
-        photoId: photoId,
-      },
-    });
-
     const deletePhoto = await prisma.photo.update({
       where: {
         id: photoId,
