@@ -401,6 +401,9 @@ const getAllUser = async (req, res) => {
       where: {
         isDeleted: false,
         role: "USER",
+        NOT: {
+          id: parseToken.userId
+        },
         OR: search
         ? [
           {
