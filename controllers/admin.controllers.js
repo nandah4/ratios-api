@@ -35,6 +35,12 @@ const getAllUserController = async (req, res) => {
     const per_page = parseInt(req.query.page);
     const offset = (currentPage - 1) * per_page;
 
+    const total_user = await prisma.user.count({
+      where: {
+        role: "USER",
+      },
+    });
+
     const total_user_active = await prisma.user.count({
       where: {
         role: "USER",
@@ -48,8 +54,8 @@ const getAllUserController = async (req, res) => {
     if (!currentPage || !per_page || !isDeleted) {
       getAllUser = await prisma.user.findMany({
         where: {
-          role: "USER",
           isDeleted: false,
+          role: "USER",
         },
         take: 8,
         orderBy: {
@@ -61,6 +67,7 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_active: total_user_active,
+        total_user: total_user,
         total_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
@@ -95,6 +102,7 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_active: total_user_active,
+        total_user: total_user,
         total_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
@@ -138,6 +146,7 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_deleted: total_user_deleted,
+        total_user: total_user,
         total_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
@@ -169,6 +178,7 @@ const getAllUserController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_user_active: total_user_active,
+        total_user: total_user,
         total_page: total_page,
         data: getAllUser.map((user) => ({
           id: user.id,
@@ -345,11 +355,19 @@ const getAllPhotoController = async (req, res) => {
     const per_page = parseInt(req.query.page);
     const offset = (currentPage - 1) * per_page;
 
-    const total_photo_active = await prisma.photo.count({
+    const total_photo = await prisma.photo.count({
       where: {
         user: {
           role: "USER",
-          isDeleted: false,
+        },
+      },
+    });
+
+    const total_photo_active = await prisma.photo.count({
+      where: {
+        isDeleted: false,
+        user: {
+          role: "USER",
         },
       },
     });
@@ -376,6 +394,7 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_active: total_photo_active,
+        total_photo: total_photo,
         total_page: total_page,
         data: [...getAllPhoto],
       };
@@ -402,6 +421,7 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_active: total_photo_active,
+        total_photo: total_photo,
         total_page: total_page,
         data: [...getAllPhoto],
       };
@@ -439,6 +459,7 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_deleted: total_photo_deleted,
+        total_photo: total_photo,
         total_page: total_page,
         data : [...getAllPhoto]
       };
@@ -463,6 +484,7 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_active: total_photo_active,
+        total_photo: total_photo,
         total_page: total_page,
         data: [...getAllPhoto],
       };
