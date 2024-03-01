@@ -26,6 +26,7 @@ model User {
     donation  Donation[]
     followers Follows[]  @relation("followers")
     following Follows[]  @relation("following")
+    withDrawals WithDrawals[]
 }
 
 model Follows {
@@ -98,6 +99,7 @@ model Donation{
     user User @relation(fields: [userId], references: [id])
     photoId String
     photo Photo @relation(fields: [photoId], references: [id])
+    adminFee AdminFee?
     amount Int
     status STATUS_PAYMENT @default(PENDING)
     createdAt DateTime @default(now())
@@ -108,4 +110,20 @@ enum STATUS_PAYMENT {
     PENDING
     SUCCESS
     FAILED
+}
+
+model AdminFee {
+    id String @id @default(uuid())
+    amount Int
+    donationId String @unique
+    donation Donation @relation(fields: [donationId], references: [id])
+    createdAt DateTime @default(now())
+}
+
+model WithDrawals {
+    id String @id @default(uuid())
+    amount Int
+    userId String
+    user User @relation(fields: [userId], references: [id])
+    createdAt DateTime @default(now())
 }

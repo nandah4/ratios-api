@@ -5,9 +5,20 @@ const { verifyJwt } = require("../utils/jwt");
 const { PrismaClient } = require("@prisma/client");
 const { v4 } = require("uuid");
 const { default: axios } = require("axios");
+const { log } = require("console");
 const Buffer = require("buffer").Buffer;
 
-const prisma = new PrismaClient();
+const getDonation = async (req, res) => {
+  const prisma = new PrismaClient();
+
+  const donation = await prisma.donation.findMany({
+    include: {
+      user: true,
+    },
+  });
+
+  return res.send(successMessageWithData(donation));
+};
 
 const createDonation = async (req, res) => {
   const { photoId } = req.params;
@@ -33,6 +44,20 @@ const createDonation = async (req, res) => {
   const photo = await prisma.photo.findFirst({
     where: {
       id: photoId,
+    },
+  });
+
+  const adminFee = await prisma.adminFee.create({
+    data: {
+      amount: 1000,
+      donation: {
+        create: {
+          id: id,
+          amount: parseInt(amount),
+          userId: user.id,
+          photoId: photo.id,
+        },
+      },
     },
   });
 
@@ -63,10 +88,9 @@ const createDonation = async (req, res) => {
 
 const checkStatus = async (req, res) => {
   const { orderId } = req.params;
+  const prisma = new PrismaClient();
 
   const tokenMidtrans = Buffer.from(MIDTRANS_SERVER_KEY + ":").toString("base64");
-
-  console.log(tokenMidtrans);
 
   const getStatus = await axios.get(`https://api.sandbox.midtrans.com/v2/${orderId}/status`, {
     headers: {
@@ -98,17 +122,18 @@ const checkStatus = async (req, res) => {
           id: orderId,
         },
         data: {
-          status: "SUCCESS",
+          status: "FAILED",
         },
       });
       response.status = donation.status;
       break;
     }
     default:
+      response.status = "PENDING";
       break;
   }
 
   return res.send(successMessageWithData(response));
 };
 
-module.exports = { createDonation, checkStatus };
+module.exports = { createDonation, checkStatus, getDonation };

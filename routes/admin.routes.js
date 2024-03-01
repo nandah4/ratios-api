@@ -11,6 +11,8 @@ const {
   deleteComentarByAdminController,
   updatePhotoIsDeleted,
 } = require("../controllers/admin.controllers");
+const { donationRoutes } = require("./donation.routes");
+const { getDonation } = require("../controllers/donation.controllers");
 
 const adminRoutes = express.Router();
 
@@ -18,7 +20,7 @@ const adminRoutes = express.Router();
 adminRoutes.get("/users", authMiddlewareAdmin, getAllUserController);
 adminRoutes.get("/users/:userId", authMiddlewareAdmin, detailUserByAdminController);
 adminRoutes.delete("/users/:userId/", authMiddlewareAdmin, deleteUserController);
-adminRoutes.put("/users/:userId", authMiddlewareAdmin, updateIsdeletedUser)
+adminRoutes.put("/users/:userId", authMiddlewareAdmin, updateIsdeletedUser);
 
 // Admin manage photo
 adminRoutes.get("/photos", authMiddlewareAdmin, getAllPhotoController);
@@ -27,5 +29,8 @@ adminRoutes.delete("/photos/:photoId", authMiddlewareAdmin, deletePhotoControlle
 adminRoutes.put("/photos/:photoId", authMiddlewareAdmin, updatePhotoIsDeleted);
 
 adminRoutes.delete("/:comentarId/comentars", authMiddlewareAdmin, deleteComentarByAdminController);
+
+// admin donation
+adminRoutes.get("/donation", authMiddlewareAdmin, getDonation);
 
 module.exports = { adminRoutes };
