@@ -229,7 +229,6 @@ const getAllUserController = async (req, res) => {
   }
 };
 
-
 // ADMIN - Detail User
 const detailUserByAdminController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
@@ -424,7 +423,7 @@ const updateIsdeletedUser = async (req, res) => {
 // ADMIN - GET ALL FOTO
 const getAllPhotoController = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);
-  const { currentPage = 1, isDeleted = "false" } = req.query;
+  const { currentPage = 1, isDeleted = "false", search } = req.query;
 
   try {
     const admin = await prisma.user.findUnique({
@@ -489,8 +488,8 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_active: total_photo_active,
-        total_photo: total_photo,
-        total_page: total_page,
+        total_all_photo: total_photo,
+        tota_all_page: total_page,
         data: [...getAllPhoto],
       };
 
@@ -502,6 +501,20 @@ const getAllPhotoController = async (req, res) => {
           user: {
             role: "USER",
           },
+          OR: search
+            ? [
+                {
+                  title: {
+                    contains: search,
+                  },
+                },
+                {
+                  description: {
+                    contains: search,
+                  },
+                },
+              ]
+            : undefined,
         },
         include: {
           user: true,
@@ -516,8 +529,8 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_active: total_photo_active,
-        total_photo: total_photo,
-        total_page: total_page,
+        total_all_photo: total_photo,
+        total_all_page: total_page,
         data: [...getAllPhoto],
       };
 
@@ -529,6 +542,20 @@ const getAllPhotoController = async (req, res) => {
           user: {
             role: "USER",
           },
+          OR: search
+            ? [
+                {
+                  title: {
+                    contains: search,
+                  },
+                },
+                {
+                  description: {
+                    contains: search,
+                  },
+                },
+              ]
+            : undefined,
         },
         include: {
           user: true,
@@ -554,8 +581,8 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_deleted: total_photo_deleted,
-        total_photo: total_photo,
-        total_page: total_page,
+        total_all_photo: total_photo,
+        total_all_page: total_page,
         data: [...getAllPhoto],
       };
 
@@ -579,8 +606,8 @@ const getAllPhotoController = async (req, res) => {
         page: currentPage,
         per_page: per_page,
         total_photo_active: total_photo_active,
-        total_photo: total_photo,
-        total_page: total_page,
+        total_all_photo: total_photo,
+        total_all_page: total_page,
         data: [...getAllPhoto],
       };
 
