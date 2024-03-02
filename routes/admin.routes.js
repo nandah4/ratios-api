@@ -10,6 +10,7 @@ const {
   deletePhotoController, // admin
   deleteComentarByAdminController,
   updatePhotoIsDeleted,
+  getStatistic
 } = require("../controllers/admin.controllers");
 const { donationRoutes } = require("./donation.routes");
 const { getDonation } = require("../controllers/donation.controllers");
@@ -32,5 +33,9 @@ adminRoutes.delete("/:comentarId/comentars", authMiddlewareAdmin, deleteComentar
 
 // admin donation
 adminRoutes.get("/donation", authMiddlewareAdmin, getDonation);
+
+// admin statistik
+adminRoutes.get("/statistik", authMiddlewareAdmin, getStatistic);
+
 
 module.exports = { adminRoutes };

@@ -854,6 +854,138 @@ const updatePhotoIsDeleted = async (req, res) => {
   }
 };
 
+const getStatistic = async (req, res) => {
+  const parseToken = verifyJwt(req.headers?.authorization);
+
+  try {
+    const admin = await prisma.user.findUnique({
+      where: {
+        id: parseToken.userId,
+        role: "ADMIN"
+      },
+    });
+
+    if(!admin || admin.role !== "ADMIN") {
+      return res.status(403).send(badRequestMessage({
+        messages: [
+          {
+            field: "userId or Role",
+            message: "You don`t have access this resource"
+          }
+        ]
+      }));
+    };
+
+    // mengambil tanggal awal dan akhit bulan sebelumnya
+    const currentDate = new Date();
+    const lastMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const lastMonthEnd = new Date (currentDate.getFullYear(), currentDate.getMonth(), 0);
+
+    // statistik per minggu
+    const statisticPerWeek = [];
+    let startDate = new Date(lastMonthStart);
+    while (startDate <= lastMonthEnd) {
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 6);
+      const registrasiCountPerWeek =  await prisma.user.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          }
+        }
+      });
+      const donationCountPerWeek = await prisma.donation.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          }
+        },
+      });
+      const amountDonationPerWeek = await prisma.donation.aggregate({
+        _sum: {
+          amount: true,
+        },
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          }
+        }
+      });
+      const withdrawalCountPerWeek = await prisma.withDrawals.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          }
+        }
+      });
+      const photoCountPerWeek = await prisma.photo.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          }
+        }
+      });
+      const albumCountPerWeek = await prisma.album.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          }
+        }
+      });
+      const commentCountPerWeek = await prisma.comentar.count({
+        where: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          }
+        }
+      });
+
+      statisticPerWeek.push({
+        weekStartDate: startDate.toISOString().split("T")[0],
+        weekEndDate: endDate.toISOString().split("T")[0],
+        total_registrasi: registrasiCountPerWeek,
+        total_activity_donasi: donationCountPerWeek,
+        amount_donasi: amountDonationPerWeek,
+        total_activity_withDrawals: withdrawalCountPerWeek,
+        total_photo: photoCountPerWeek,
+        total_album: albumCountPerWeek,
+        total_comentar: commentCountPerWeek
+      });
+      startDate.setDate(startDate.getDate() + 7);
+    };
+
+    // mengelompokkan statistik per minggu menjadi per bulan
+    const statisticsPerMonth = [];
+    let monthStart = new Date(lastMonthStart);
+    while (monthStart <= lastMonthEnd) {
+      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+      const statisticsThisMonth = statisticPerWeek.filter((stat) => {
+        const weekStartDate = new Date(stat.weekStartDate);
+        return weekStartDate >= monthStart && weekStartDate <= monthEnd;
+      });
+      statisticsPerMonth.push({
+        monthStartDate: monthStart.toISOString().split("T")[0],
+        monthEndDate: monthEnd.toISOString().split("T")[0],
+        statistics: statisticsThisMonth
+      });
+      monthStart = new Date(monthEnd);
+      monthStart.setDate(monthStart.getDate() + 1);
+    }
+
+    return res.status(200).send(successMessageWithData({statisticsPerMonth}));
+
+  } catch (error) {
+    console.log(error)
+  }
+};
+
 module.exports = {
   getAllUserController,
   detailUserByAdminController,
@@ -864,4 +996,5 @@ module.exports = {
   deletePhotoController,
   deleteComentarByAdminController,
   updatePhotoIsDeleted,
+  getStatistic,
 };
