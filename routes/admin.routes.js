@@ -35,7 +35,7 @@ adminRoutes.delete("/:comentarId/comentars", authMiddlewareAdmin, deleteComentar
 adminRoutes.get("/donation", authMiddlewareAdmin, getDonation);
 
 // admin statistik
-adminRoutes.get("/statistik", authMiddlewareAdmin, getStatistic);
+adminRoutes.get("/statistic", authMiddlewareAdmin, getStatistic);
 
 
 module.exports = { adminRoutes };

@@ -947,12 +947,14 @@ const getStatistic = async (req, res) => {
         }
       });
 
+      const total_amount = amountDonationPerWeek._sum.amount ?? 0;
+
       statisticPerWeek.push({
         weekStartDate: startDate.toISOString().split("T")[0],
         weekEndDate: endDate.toISOString().split("T")[0],
         total_registrasi: registrasiCountPerWeek,
         total_activity_donasi: donationCountPerWeek,
-        amount_donasi: amountDonationPerWeek,
+        amount_donasi: total_amount,
         total_activity_withDrawals: withdrawalCountPerWeek,
         total_photo: photoCountPerWeek,
         total_album: albumCountPerWeek,
