@@ -11,13 +11,71 @@ const Buffer = require("buffer").Buffer;
 const getDonation = async (req, res) => {
   const prisma = new PrismaClient();
 
-  const donation = await prisma.donation.findMany({
-    include: {
-      user: true,
-    },
-  });
+  const { currentPage = 1 } = req.query;
 
-  return res.send(successMessageWithData(donation));
+  try {
+    const per_page = parseInt(req.query.page);
+    const offset = (currentPage - 1) * per_page;
+
+    const total_donation = await prisma.donation.count({
+      where: {
+        user: {
+          role: "USER",
+        },
+      },
+    });
+
+    const total_page = Math.ceil(total_donation / per_page);
+
+    let getAllDonation;
+
+    if (currentPage && per_page) {
+      getAllDonation = await prisma.donation.findMany({
+        where: {
+          user: {
+            role: "USER",
+          },
+        },
+        skip: offset,
+        take: per_page,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_donation: total_donation,
+        total_all_page: total_page,
+        data: [...getAllDonation],
+      };
+      return res.send(successMessageWithData(responseData));
+    } else {
+      getAllDonation = await prisma.donation.findMany({
+        where: {
+          user: {
+            role: "USER",
+          },
+        },
+        take: 8,
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const responseData = {
+        page: currentPage,
+        per_page: per_page,
+        total_donation: total_donation,
+        total_all_page: total_page,
+        data: [...getAllDonation],
+      };
+      return res.send(successMessageWithData(responseData));
+    }
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const createDonation = async (req, res) => {
