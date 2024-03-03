@@ -11,6 +11,7 @@ const { adminRoutes } = require("./routes/admin.routes");
 const app = express();
 const multer = require("multer");
 const { donationRoutes } = require("./routes/donation.routes");
+const { walletRoutes } = require("./routes/wallet.routes");
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
@@ -30,6 +31,7 @@ app.use("/photos", photosRoutes);
 app.use("/albums", albumRoutes);
 app.use("/donation", donationRoutes);
 app.use("/admin", adminRoutes);
+app.use("/wallet", walletRoutes);
 
 app.listen(ENV_PORT, () => {
   console.log(`ratio service listening on http://localhost:${ENV_PORT}`);
