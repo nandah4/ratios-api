@@ -5,6 +5,7 @@ const {
   badRequestMessage,
 } = require("../utils/message");
 const { matchPassword } = require("../utils/password");
+const { verifyJwt } = require("../utils/jwt");
 
 const createWithdrawal = async (req, res) => {
   const parseToken = verifyJwt(req.headers?.authorization);

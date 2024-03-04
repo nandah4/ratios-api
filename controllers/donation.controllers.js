@@ -41,6 +41,7 @@ const getDonation = async (req, res) => {
         orderBy: {
           createdAt: "desc",
         },
+        include: { user: true, adminFee: true },
       });
 
       const responseData = {
@@ -61,6 +62,10 @@ const getDonation = async (req, res) => {
         take: 8,
         orderBy: {
           createdAt: "desc",
+        },
+        include: {
+          user: true,
+          adminFee: true,
         },
       });
 
@@ -103,6 +108,9 @@ const createDonation = async (req, res) => {
     where: {
       id: photoId,
     },
+    include: {
+      user: true,
+    },
   });
 
   const adminFee = await prisma.adminFee.create({
@@ -120,7 +128,7 @@ const createDonation = async (req, res) => {
   });
 
   const snap = new midtrans.Snap({
-    isProduction: false,
+    isProduction: true,
     serverKey: MIDTRANS_SERVER_KEY,
   });
 
@@ -151,7 +159,7 @@ const checkStatus = async (req, res) => {
 
   const tokenMidtrans = Buffer.from(MIDTRANS_SERVER_KEY + ":").toString("base64");
 
-  const getStatus = await axios.get(`https://api.sandbox.midtrans.com/v2/${orderId}/status`, {
+  const getStatus = await axios.get(`https://api.midtrans.com/v2/${orderId}/status`, {
     headers: {
       Authorization: `Basic ${tokenMidtrans}`,
     },

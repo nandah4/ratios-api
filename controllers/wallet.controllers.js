@@ -9,8 +9,10 @@ const getWallet = async (req, res) => {
   const donation = await prisma.donation.findMany({
     where: {
       status: "SUCCESS",
-      user: {
-        id: parseToken?.userId,
+      photo: {
+        user: {
+          id: parseToken?.userId,
+        },
       },
     },
     include: {
