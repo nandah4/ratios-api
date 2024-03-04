@@ -18,6 +18,9 @@ const getWallet = async (req, res) => {
     include: {
       user: true,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   const withDrawals = await prisma.withDrawals.findMany({
@@ -29,10 +32,13 @@ const getWallet = async (req, res) => {
     include: {
       user: true,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   const amount =
-    donation?.reduce((a, b) => a + b.amount, 0) + withDrawals?.reduce((a, b) => a + b.amount, 0);
+    donation?.reduce((a, b) => a + b.amount, 0) - withDrawals?.reduce((a, b) => a + b.amount, 0);
 
   return res.send(
     successMessageWithData({

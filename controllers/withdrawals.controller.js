@@ -25,10 +25,10 @@ const createWithdrawal = async (req, res) => {
   if (isPasswordValid) {
     const prisma = new PrismaClient();
 
-    const withDrawal = prisma.withDrawals.create({
+    const withDrawal = await prisma.withDrawals.create({
       data: {
-        amount: amount,
-        userId: parseToken?.id,
+        amount: parseInt(amount),
+        userId: parseToken?.userId,
       },
     });
 
