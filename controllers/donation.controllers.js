@@ -95,7 +95,7 @@ const createDonation = async (req, res) => {
 
   const user = await prisma.user.findFirst({
     where: {
-      id: parseToken.id,
+      id: parseToken?.userId,
     },
   });
 
