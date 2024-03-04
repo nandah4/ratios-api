@@ -135,7 +135,7 @@ const createDonation = async (req, res) => {
   const payload = {
     transaction_details: {
       order_id: id,
-      gross_amount: amount,
+      gross_amount: parseInt(amount) + adminFee.amount,
     },
     customer_details: {
       email: user.email,
