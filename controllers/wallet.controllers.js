@@ -8,14 +8,24 @@ const getWallet = async (req, res) => {
 
   const donation = await prisma.donation.findMany({
     where: {
-      id: parseToken?.id,
       status: "SUCCESS",
+      user: {
+        id: parseToken?.userId,
+      },
+    },
+    include: {
+      user: true,
     },
   });
 
   const withDrawals = await prisma.withDrawals.findMany({
     where: {
-      id: parseToken?.id,
+      user: {
+        id: parseToken?.userId,
+      },
+    },
+    include: {
+      user: true,
     },
   });
 

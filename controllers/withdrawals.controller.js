@@ -1,5 +1,9 @@
 const { PrismaClient } = require("@prisma/client");
-const { successCreateMessageWithData, successMessageWithData } = require("../utils/message");
+const {
+  successCreateMessageWithData,
+  successMessageWithData,
+  badRequestMessage,
+} = require("../utils/message");
 const { matchPassword } = require("../utils/password");
 
 const createWithdrawal = async (req, res) => {
@@ -9,9 +13,13 @@ const createWithdrawal = async (req, res) => {
 
   const prisma = new PrismaClient();
 
-  const user = await prisma.user.findFirst();
+  const user = await prisma.user.findFirst({
+    where: {
+      id: parseToken?.id,
+    },
+  });
 
-  const isPasswordValid = await matchPassword(password, findAdmin.password);
+  const isPasswordValid = await matchPassword(password, user.password);
 
   if (isPasswordValid) {
     const prisma = new PrismaClient();
@@ -25,6 +33,8 @@ const createWithdrawal = async (req, res) => {
 
     return res.send(successMessageWithData(withDrawal));
   }
+
+  return res.send(badRequestMessage([]));
 };
 
 module.exports = { createWithdrawal };
