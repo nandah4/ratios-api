@@ -15,7 +15,7 @@ const createWithdrawal = async (req, res) => {
 
   const user = await prisma.user.findFirst({
     where: {
-      id: parseToken?.id,
+      id: parseToken?.userId,
     },
   });
 
@@ -34,7 +34,7 @@ const createWithdrawal = async (req, res) => {
     return res.send(successMessageWithData(withDrawal));
   }
 
-  return res.send(badRequestMessage([]));
+  return res.status(400).send(badRequestMessage([]));
 };
 
 module.exports = { createWithdrawal };
