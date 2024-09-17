@@ -33,7 +33,7 @@ app.use("/albums", albumRoutes);
 app.use("/donation", donationRoutes);
 app.use("/admin", adminRoutes);
 app.use("/wallet", walletRoutes);
-app.use("/withDrawals", withDrawalRoutes);
+app.use("/withdrawal", withDrawalRoutes);
 
 app.listen(ENV_PORT, () => {
   console.log(`ratio service listening on http://localhost:${ENV_PORT}`);
